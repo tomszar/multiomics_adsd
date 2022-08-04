@@ -136,8 +136,9 @@ def _plsda_auroc(n_components: int,
         If False, returns only the auroc score. Default: False.
     '''
     pls = PLSRegression(n_components=n_components,
-                        scale=True).fit(X=X_train,
-                                        Y=Y_train)
+                        scale=True,
+                        max_iter=1000).fit(X=X_train,
+                                           Y=Y_train)
     y_pred = pls.predict(X_test)
     score = roc_auc_score(Y_test, y_pred)
     if return_full:
