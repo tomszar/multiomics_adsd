@@ -29,5 +29,6 @@ def main():
     i_b_m = model_table['table'].iloc[:, 2].idxmax()
     best_mod = model_table['models'][i_b_m]
     xscores = pd.DataFrame(best_mod.transform(X))
+    xscores.index = X.index
     xscores.to_csv('Xscores.csv')
     model_table['table'].to_csv('ModelTable.csv')
