@@ -24,6 +24,7 @@ def plsda_doubleCV(X: pd.DataFrame,
     regression - discriminant analysis.
 
     Parameters
+    ----------
     X: pd.DataFrame
         The predictor variables.
     y: Union[pd.DataFrame, pd.Series]
@@ -38,6 +39,15 @@ def plsda_doubleCV(X: pd.DataFrame,
         Maximum number of LV to test. Default: 50.
     random_state: int
         For reproducibility. Default: 1203.
+
+    Returns
+    -------
+    models_table: dict[str,
+                       Union[PLSRegression,
+                             pd.DataFrame]
+        Dictionary with the table of the best models, including repetition,
+        number of latent variables, and AUROC. Also includes the model for
+        prediction.
     '''
     encoder = OneHotEncoder(sparse=False)
     yd = pd.DataFrame(encoder.fit_transform(np.array(y).reshape(-1, 1)))
@@ -121,6 +131,7 @@ def _plsda_auroc(n_components: int,
     and the model, or just the AUROC value.
 
     Parameters
+    ----------
     n_components: int
         Number of components to use.
     X_train: pd.DataFrame
@@ -134,6 +145,14 @@ def _plsda_auroc(n_components: int,
     return_full: bool
         Whether to return the model and the auroc score.
         If False, returns only the auroc score. Default: False.
+
+    Returns
+    -------
+    auroc: Union[float,
+                 dict[str,
+                      Union[PLSRegression,
+                            float]]]
+        Return the auroc score, and optionally the regression model.
     '''
     pls = PLSRegression(n_components=n_components,
                         scale=True,
@@ -142,10 +161,11 @@ def _plsda_auroc(n_components: int,
     y_pred = pls.predict(X_test)
     score = roc_auc_score(Y_test, y_pred)
     if return_full:
-        return {'model': pls,
-                'score': score}
+        auroc = {'model': pls,
+                 'score': score}
     else:
-        return score
+        auroc = score
+    return auroc
 
 
 def _calculate_vips(model):
@@ -159,7 +179,7 @@ def _calculate_vips(model):
         model generated from the PLSRegression function
 
     Returns
-    ----------
+    -------
     vips: np.array
         variable importance in projection for each variable
     '''

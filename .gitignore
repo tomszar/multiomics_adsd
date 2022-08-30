@@ -130,3 +130,6 @@ dmypy.json
 
 # Pyright config
 pyrightconfig.json
+
+# PSU Roar job
+run_job.sh
