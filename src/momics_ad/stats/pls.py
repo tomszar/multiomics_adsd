@@ -1,25 +1,25 @@
 import multiprocessing
+from itertools import repeat
+from typing import Union
+
 import numpy as np
 import pandas as pd
-from typing import Union
-from itertools import repeat
-from sklearn.metrics import roc_auc_score
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.cross_decomposition import PLSRegression
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold
+from sklearn.preprocessing import OneHotEncoder
 
 
-def plsda_doubleCV(X: pd.DataFrame,
-                   y: Union[pd.DataFrame, pd.Series],
-                   cv1_splits: int = 7,
-                   cv2_splits: int = 8,
-                   n_repeats: int = 30,
-                   max_components: int = 50,
-                   random_state: int = 1203) -> dict[str,
-                                                     Union[PLSRegression,
-                                                           pd.DataFrame]]:
-    '''
+def plsda_doubleCV(
+    X: pd.DataFrame,
+    y: Union[pd.DataFrame, pd.Series],
+    cv1_splits: int = 7,
+    cv2_splits: int = 8,
+    n_repeats: int = 30,
+    max_components: int = 50,
+    random_state: int = 1203,
+) -> dict[str, Union[PLSRegression, pd.DataFrame]]:
+    """
     Estimate a double cross validation on a partial least squares
     regression - discriminant analysis.
 
@@ -48,18 +48,20 @@ def plsda_doubleCV(X: pd.DataFrame,
         Dictionary with the table of the best models, including repetition,
         number of latent variables, and AUROC. Also includes the model for
         prediction.
-    '''
-    encoder = OneHotEncoder(sparse=False)
+    """
+    encoder = OneHotEncoder(sparse_output=False)
     yd = pd.DataFrame(encoder.fit_transform(np.array(y).reshape(-1, 1)))
-    cv2 = RepeatedStratifiedKFold(n_splits=cv2_splits,
-                                  n_repeats=n_repeats,
-                                  random_state=random_state)
+    cv2 = RepeatedStratifiedKFold(
+        n_splits=cv2_splits, n_repeats=n_repeats, random_state=random_state
+    )
     cv1 = StratifiedKFold(n_splits=cv1_splits)
     cv2_table = pd.DataFrame(np.zeros((cv2_splits, 2)))
     cv1_table = pd.DataFrame(np.zeros((cv1_splits, 2)))
-    for_table = {'rep': list(range(1, n_repeats+1)),
-                 'LV': list(range(1, n_repeats+1)),
-                 'AUROC': list(range(1, n_repeats+1))}
+    for_table = {
+        "rep": list(range(1, n_repeats + 1)),
+        "LV": list(range(1, n_repeats + 1)),
+        "AUROC": [0.1] * n_repeats,
+    }
     model_table = pd.DataFrame(for_table)
     row_cv2 = 0
     row_model_table = 0
@@ -81,26 +83,28 @@ def plsda_doubleCV(X: pd.DataFrame,
             yd_val = yd_rest.iloc[validation, :]
             ns = list(range(1, max_components))
             with multiprocessing.Pool(processes=None) as pool:
-                auroc = pool.starmap(_plsda_auroc, zip(ns,
-                                                       repeat(X_train),
-                                                       repeat(yd_train),
-                                                       repeat(X_val),
-                                                       repeat(yd_val)))
+                auroc = pool.starmap(
+                    _plsda_auroc,
+                    zip(
+                        ns,
+                        repeat(X_train),
+                        repeat(yd_train),
+                        repeat(X_val),
+                        repeat(yd_val),
+                    ),
+                )
             nlv = auroc.index(max(auroc)) + 1
             cv1_table.iloc[row_cv1, 0] = nlv
             cv1_table.iloc[row_cv1, 1] = max(auroc)
             row_cv1 += 1
         # Obtain optimal n of components
         n_components = int(cv1_table.iloc[cv1_table[1].idxmax(), 0])
-        model_score = _plsda_auroc(n_components,
-                                   X_rest,
-                                   yd_rest,
-                                   X_test,
-                                   yd_test,
-                                   return_full=True)
+        model_score = _plsda_auroc(
+            n_components, X_rest, yd_rest, X_test, yd_test, return_full=True
+        )
         cv2_table.iloc[row_cv2, 0] = n_components
-        cv2_table.iloc[row_cv2, 1] = model_score['score']
-        cv2_models.append(model_score['model'])
+        cv2_table.iloc[row_cv2, 1] = model_score["score"]
+        cv2_models.append(model_score["model"])
         row_cv2 += 1
         if row_cv2 == cv2_splits:
             best_cv2_lv = int(cv2_table.iloc[cv2_table[1].idxmax(), 0])
@@ -112,21 +116,19 @@ def plsda_doubleCV(X: pd.DataFrame,
             cv2_table = pd.DataFrame(np.zeros((cv2_splits, 2)))
             cv2_models = []
             row_cv2 = 0
-    models_table = {'models': best_models,
-                    'table': model_table}
+    models_table = {"models": best_models, "table": model_table}
     return models_table
 
 
-def _plsda_auroc(n_components: int,
-                 X_train: pd.DataFrame,
-                 Y_train: Union[pd.Series, pd.DataFrame],
-                 X_test: pd.DataFrame,
-                 Y_test: Union[pd.Series, pd.DataFrame],
-                 return_full: bool = False) -> Union[float,
-                                                     dict[str,
-                                                          Union[PLSRegression,
-                                                                float]]]:
-    '''
+def _plsda_auroc(
+    n_components: int,
+    X_train: pd.DataFrame,
+    Y_train: Union[pd.Series, pd.DataFrame],
+    X_test: pd.DataFrame,
+    Y_test: Union[pd.Series, pd.DataFrame],
+    return_full: bool = False,
+) -> Union[float, dict[str, Union[PLSRegression, float]]]:
+    """
     Estimate a partial least squares regression and return the AUROC value
     and the model, or just the AUROC value.
 
@@ -153,23 +155,21 @@ def _plsda_auroc(n_components: int,
                       Union[PLSRegression,
                             float]]]
         Return the auroc score, and optionally the regression model.
-    '''
-    pls = PLSRegression(n_components=n_components,
-                        scale=True,
-                        max_iter=1000).fit(X=X_train,
-                                           Y=Y_train)
+    """
+    pls = PLSRegression(n_components=n_components, scale=True, max_iter=1000).fit(
+        X=X_train, y=Y_train
+    )
     y_pred = pls.predict(X_test)
     score = roc_auc_score(Y_test, y_pred)
     if return_full:
-        auroc = {'model': pls,
-                 'score': score}
+        auroc = {"model": pls, "score": score}
     else:
         auroc = score
     return auroc
 
 
 def _calculate_vips(model):
-    '''
+    """
     Estimates Variable Importance in Projection (VIP)
     in Partial Least Squares (PLS)
 
@@ -182,17 +182,15 @@ def _calculate_vips(model):
     -------
     vips: np.array
         variable importance in projection for each variable
-    '''
+    """
     t = model.x_scores_
     w = model.x_weights_
     q = model.y_loadings_
     p, h = w.shape
     vips = np.zeros((p,))
-    s = np.diag(np.matmul(np.matmul(np.matmul(t.T, t), q.T), q)).\
-        reshape(h, -1)
+    s = np.diag(np.matmul(np.matmul(np.matmul(t.T, t), q.T), q)).reshape(h, -1)
     total_s = np.sum(s)
     for i in range(p):
-        weight = np.array([(w[i, j] /
-                            np.linalg.norm(w[:, j]))**2 for j in range(h)])
-        vips[i] = np.sqrt(p*(np.matmul(s.T, weight))/total_s)
-    return(vips)
+        weight = np.array([(w[i, j] / np.linalg.norm(w[:, j])) ** 2 for j in range(h)])
+        vips[i] = np.sqrt(p * (np.matmul(s.T, weight)) / total_s)
+    return vips
