@@ -7,6 +7,13 @@ def main():
     """
     Figure generation main routine.
     """
+    # Read necessary data
     x_scores = read.read_xscores()
     x_center = sd.center_matrix(x_scores)
+    metabolomics = read.read_metabolomics()
+    metabolomics = metabolomics.drop(columns="DX")
+
+    # Scatter plots
     plots.scatter_plot(x_center)
+    # Correlation plot
+    plots.cor_plot(metabolomics)

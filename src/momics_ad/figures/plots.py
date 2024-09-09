@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 
@@ -68,4 +69,36 @@ def scatter_plot(scores: pd.DataFrame):
                 looping = False
     fig.tight_layout()
     fig.savefig("ScatterPlot.pdf", dpi=600)
-    plt.show()
+
+
+def cor_plot(dat: pd.DataFrame):
+    """
+    Generate a correlation plot out of multiple variables.
+
+    Parameters
+    ----------
+    dat: pd.DataFrame
+        Data frame with the variables to generate a correlation plot.
+    """
+    fig, ax = plt.subplots(figsize=(28, 28))
+    cor_matrix = dat.corr()
+    ax.imshow(cor_matrix, cmap="RdBu")
+    ax.set_xticks(np.arange(len(cor_matrix)), labels=cor_matrix.index)
+    plt.setp(
+        ax.get_xticklabels(),
+        rotation=45,
+        ha="right",
+        rotation_mode="anchor",
+    )
+    plt.tick_params(
+        which="both",  # both major and minor ticks are affected
+        left=False,
+        right=False,
+        labelleft=False,
+        bottom=False,  # ticks along the bottom edge are off
+        top=False,  # ticks along the top edge are off
+        labelbottom=False,
+    )  # labels along the bottom edge are off
+    ax.spines[:].set_visible(False)
+    fig.tight_layout()
+    fig.savefig("CorPlot.pdf", dpi=200)
