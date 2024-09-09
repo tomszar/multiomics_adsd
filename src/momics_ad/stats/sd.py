@@ -1,12 +1,13 @@
+from typing import Union
+
 import numpy as np
 import pandas as pd
-from typing import Union
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.preprocessing import OneHotEncoder
 
 
 def center_matrix(dat: pd.DataFrame) -> pd.DataFrame:
-    '''
+    """
     Center matrix grouped by sex.
 
     Parameters
@@ -18,22 +19,23 @@ def center_matrix(dat: pd.DataFrame) -> pd.DataFrame:
     ----------
     datc: pd.DataFrame
         Centered dataframe
-    '''
+    """
     datc = dat.copy()
-    means = dat.groupby('PTGENDER').mean()
-    last_col = str(dat.columns.get_loc('DX') - 1)
-    datc.loc[dat['PTGENDER'] == 'Female', '0':last_col] = \
-        datc.loc[dat['PTGENDER'] == 'Female', '0':last_col]\
-        - means.iloc[0, :]
-    datc.loc[dat['PTGENDER'] == 'Male', '0':last_col] = \
-        datc.loc[dat['PTGENDER'] == 'Male', '0':last_col]\
-        - means.iloc[1, :]
+    dat_num = dat.copy()
+    del dat_num["DX"]
+    means = dat_num.groupby("PTGENDER").mean()
+    last_col = str(dat.columns.get_loc("DX") - 1)
+    datc.loc[dat["PTGENDER"] == "Female", "0":last_col] = (
+        datc.loc[dat["PTGENDER"] == "Female", "0":last_col] - means.iloc[0, :]
+    )
+    datc.loc[dat["PTGENDER"] == "Male", "0":last_col] = (
+        datc.loc[dat["PTGENDER"] == "Male", "0":last_col] - means.iloc[1, :]
+    )
     return datc
 
 
-def get_model_matrix(X: pd.DataFrame,
-                     full: bool = True) -> np.ndarray:
-    '''
+def get_model_matrix(X: pd.DataFrame, full: bool = True) -> np.ndarray:
+    """
     Generate a model matrix from a dataframe of factors.
 
     Parameters
@@ -48,22 +50,24 @@ def get_model_matrix(X: pd.DataFrame,
     -------
     model_mat: np.ndarray
         Model matrix with intercept.
-    '''
-    enc = OneHotEncoder(handle_unknown='ignore')
+    """
+    enc = OneHotEncoder(handle_unknown="ignore")
     model_mat = enc.fit(X).transform(X).toarray()
     # Intercept is control female
     model_mat = np.delete(model_mat, [2, 3], 1)
     if full:
-        model_mat = np.c_[model_mat,
-                          model_mat[:, 0] * model_mat[:, 2],
-                          model_mat[:, 1] * model_mat[:, 2]]
+        model_mat = np.c_[
+            model_mat,
+            model_mat[:, 0] * model_mat[:, 2],
+            model_mat[:, 1] * model_mat[:, 2],
+        ]
     # Add intercept
     model_mat = np.c_[np.ones(model_mat.shape[0]), model_mat]
     return model_mat
 
 
 def pair_difference(dat: pd.DataFrame) -> tuple:
-    '''
+    """
     Estimate the difference in magnitude and direction
     in two states, divided by sex.
 
@@ -88,29 +92,33 @@ def pair_difference(dat: pd.DataFrame) -> tuple:
            "Analysis of two‐state multivariate phenotypic change in ecological
            studies." Ecology 88.3 (2007): 683-692.
            https://doi.org/10.1890/06-0727
-    '''
-    last_col = dat.columns.get_loc('DX')
-    means = {('Female', 'NL'): pd.DataFrame(),
-             ('Female', 'Dementia'): pd.DataFrame(),
-             ('Male', 'NL'): pd.DataFrame(),
-             ('Male', 'Dementia'): pd.DataFrame()}
-    for g, d in dat.groupby(['PTGENDER', 'DX']):
+    """
+    last_col = dat.columns.get_loc("DX")
+    means = {
+        ("Female", "NL"): pd.DataFrame(),
+        ("Female", "Dementia"): pd.DataFrame(),
+        ("Male", "NL"): pd.DataFrame(),
+        ("Male", "Dementia"): pd.DataFrame(),
+    }
+    for g, d in dat.groupby(["PTGENDER", "DX"]):
         if g in means:
             means[g] = d.iloc[:, :last_col].mean()
-    yf = means[('Female', 'NL')] - means[('Female', 'Dementia')]
-    ym = means[('Male', 'NL')] - means[('Male', 'Dementia')]
+    yf = means[("Female", "NL")] - means[("Female", "Dementia")]
+    ym = means[("Male", "NL")] - means[("Male", "Dementia")]
     Def = np.sqrt(np.sum(np.power(yf, 2)))
     Dem = np.sqrt(np.sum(np.power(ym, 2)))
     delta = Def - Dem
-    angle = np.arccos(np.inner(yf/Def, ym/Dem)) * 180/np.pi
+    angle = np.arccos(np.inner(yf / Def, ym / Dem)) * 180 / np.pi
     return angle, delta
 
 
-def estimate_difference(Y: Union[pd.DataFrame, np.ndarray],
-                        model_matrix: Union[pd.DataFrame, np.ndarray],
-                        LS_means: Union[pd.DataFrame, np.ndarray],
-                        contrast: list[list[int]]) -> tuple:
-    '''
+def estimate_difference(
+    Y: Union[pd.DataFrame, np.ndarray],
+    model_matrix: Union[pd.DataFrame, np.ndarray],
+    LS_means: Union[pd.DataFrame, np.ndarray],
+    contrast: list[list[int]],
+) -> tuple:
+    """
     Estimate parameters angle, delta, and shape given an outcome
     matrix, model matrix, and contrast to compare. This is a comparison
     of more than two states.
@@ -146,7 +154,7 @@ def estimate_difference(Y: Union[pd.DataFrame, np.ndarray],
            Evolution: International Journal of Organic Evolution 63.5 (2009):
            1143-1154.
            https://doi.org/10.1111/j.1558-5646.2009.00649.x
-    '''
+    """
     n_groups = len(contrast)
     betas = estimate_betas(model_matrix, Y)
     obs_vect = pd.DataFrame(np.matmul(LS_means, betas))
@@ -165,7 +173,7 @@ def estimate_difference(Y: Union[pd.DataFrame, np.ndarray],
         while comp < n_groups:
             delta = np.abs(des[i] - des[comp])
             # When using SVD, no need to divide by size
-            angle = np.arccos(np.inner(ys[i], ys[comp])) * 180/np.pi
+            angle = np.arccos(np.inner(ys[i], ys[comp])) * 180 / np.pi
             deltas[i, comp] = delta
             deltas[comp, i] = delta
             angles[i, comp] = angle
@@ -174,13 +182,15 @@ def estimate_difference(Y: Union[pd.DataFrame, np.ndarray],
     return deltas, angles, shapes
 
 
-def RRPP(Y: Union[pd.DataFrame, np.ndarray],
-         model_full: Union[pd.DataFrame, np.ndarray],
-         model_reduced: Union[pd.DataFrame, np.ndarray],
-         LS_means: Union[pd.DataFrame, np.ndarray],
-         contrast: list[list[int]],
-         permutations: int = 999) -> tuple:
-    '''
+def RRPP(
+    Y: Union[pd.DataFrame, np.ndarray],
+    model_full: Union[pd.DataFrame, np.ndarray],
+    model_reduced: Union[pd.DataFrame, np.ndarray],
+    LS_means: Union[pd.DataFrame, np.ndarray],
+    contrast: list[list[int]],
+    permutations: int = 999,
+) -> tuple:
+    """
     Residual Randomization in a Permutation Procedure to evaluate
     linear models.
 
@@ -206,7 +216,7 @@ def RRPP(Y: Union[pd.DataFrame, np.ndarray],
         Distribution of deltas.
     dist_angle: list[float]
         Distribution of angles.
-    '''
+    """
     # Set Y to be pandas df
     Y = pd.DataFrame(Y)
     # Set-up permutation procedure
@@ -227,20 +237,17 @@ def RRPP(Y: Union[pd.DataFrame, np.ndarray],
         y_res_permuted.index = y_res.index
         # Create random values
         y_random = y_hat + y_res_permuted
-        d, a, s = estimate_difference(y_random,
-                                      model_full,
-                                      LS_means,
-                                      contrast)
+        d, a, s = estimate_difference(y_random, model_full, LS_means, contrast)
         deltas.append(d)
         angles.append(a)
         shapes.append(s)
     return deltas, angles, shapes
 
 
-def estimate_betas(X: Union[pd.DataFrame, np.ndarray],
-                   Y: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame,
-                                                                np.ndarray]:
-    '''
+def estimate_betas(
+    X: Union[pd.DataFrame, np.ndarray], Y: Union[pd.DataFrame, np.ndarray]
+) -> Union[pd.DataFrame, np.ndarray]:
+    """
     Estimate the beta coefficients between an outcome matrix
     and a model matrix
 
@@ -255,16 +262,15 @@ def estimate_betas(X: Union[pd.DataFrame, np.ndarray],
     -------
     betas: Union[pd.DataFrame, np.ndarray]
         Beta coefficients
-    '''
+    """
     left = np.matmul(np.transpose(X), X)
     right = np.matmul(np.transpose(X), Y)
     betas = np.matmul(np.linalg.inv(left), right)
     return betas
 
 
-def _estimate_size(obs_vect: pd.DataFrame,
-                   levels: list[int]) -> int:
-    '''
+def _estimate_size(obs_vect: pd.DataFrame, levels: list[int]) -> int:
+    """
     Estimate the size of a trajectory of two or more levels.
 
     Parameters
@@ -278,7 +284,7 @@ def _estimate_size(obs_vect: pd.DataFrame,
     -------
     size: int
         Size of the trajectory.
-    '''
+    """
     if isinstance(obs_vect, pd.DataFrame) is False:
         obs_vect = pd.DataFrame(obs_vect)
     n_levels = len(levels)
@@ -291,9 +297,8 @@ def _estimate_size(obs_vect: pd.DataFrame,
     return size
 
 
-def _estimate_orientation(obs_vect: pd.DataFrame,
-                          levels: list[int]) -> np.ndarray:
-    '''
+def _estimate_orientation(obs_vect: pd.DataFrame, levels: list[int]) -> np.ndarray:
+    """
     Estimate the orientation of a trajectory of two or more levels.
 
     Parameters
@@ -307,7 +312,7 @@ def _estimate_orientation(obs_vect: pd.DataFrame,
     -------
     orientation: int
         Orientation of the trajectory.
-    '''
+    """
     if isinstance(obs_vect, pd.DataFrame) is False:
         obs_vect = pd.DataFrame(obs_vect)
     # N of dimensions
@@ -324,9 +329,10 @@ def _estimate_orientation(obs_vect: pd.DataFrame,
     return orientation
 
 
-def _estimate_shape(vectors: Union[pd.DataFrame, np.ndarray],
-                    contrast: list[list[int]]) -> np.ndarray:
-    '''
+def _estimate_shape(
+    vectors: Union[pd.DataFrame, np.ndarray], contrast: list[list[int]]
+) -> np.ndarray:
+    """
     Align shapes using procrustes superimpostion and estimate shape
     differences.
 
@@ -344,7 +350,7 @@ def _estimate_shape(vectors: Union[pd.DataFrame, np.ndarray],
     -------
     shape_distance: np.ndarray
         Matrix with shape distances.
-    '''
+    """
     vect_c = np.array(vectors.copy())
     n_groups = len(contrast)
     n_levels = len(contrast[0])
@@ -355,12 +361,10 @@ def _estimate_shape(vectors: Union[pd.DataFrame, np.ndarray],
     # Scale to centroid size
     for i, levels in enumerate(contrast):
         centroid = np.mean(vect_c[levels, :], axis=0)
-        cs = np.sqrt(np.sum(np.sum(
-            np.power(vect_c[levels, :] - centroid, 2))))
+        cs = np.sqrt(np.sum(np.sum(np.power(vect_c[levels, :] - centroid, 2))))
         vect_c[levels, :] = vect_c[levels, :] / cs
     # Get baseline Euclidean distance
-    Qm1 = euclidean_distances(vect_c.reshape((n_groups,
-                                              n_dimensions * n_levels)))
+    Qm1 = euclidean_distances(vect_c.reshape((n_groups, n_dimensions * n_levels)))
     Q = np.tril(Qm1).sum()
     temp1 = vect_c.copy()
     temp2 = vect_c.copy()
@@ -376,8 +380,7 @@ def _estimate_shape(vectors: Union[pd.DataFrame, np.ndarray],
             # OPA rotation w.r.t M
             Mp2 = _OPA(M, temp1[levels])
             temp2[levels] = Mp2
-        Qm2 = euclidean_distances(temp2.reshape((n_groups,
-                                                 n_dimensions * n_levels)))
+        Qm2 = euclidean_distances(temp2.reshape((n_groups, n_dimensions * n_levels)))
         Q = np.tril(Qm1).sum() - np.tril(Qm2).sum()
         Qm1 = Qm2.copy()
         temp1 = temp2.copy()
@@ -386,9 +389,8 @@ def _estimate_shape(vectors: Union[pd.DataFrame, np.ndarray],
     return shape_distance
 
 
-def _OPA(M1: np.ndarray,
-         M2: np.ndarray) -> np.ndarray:
-    '''
+def _OPA(M1: np.ndarray, M2: np.ndarray) -> np.ndarray:
+    """
     Given two matrices, rotate M2 to perfectly align with M1
     using Orthogonal Procrustes Analysis [1]_.
 
@@ -410,7 +412,7 @@ def _OPA(M1: np.ndarray,
            "Extensions of the Procrustes method for the optimal superimposition
            of landmarks." Systematic biology 39.1 (1990): 40-59.
            https://doi.org/10.2307/2992207
-    '''
+    """
     X = np.matmul(M1.transpose(), M2)
     U, S, Vh = np.linalg.svd(X)
     S = np.diag(S)
