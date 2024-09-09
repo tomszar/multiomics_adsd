@@ -18,11 +18,13 @@ packages = [{ include = "momics_ad", from = "src" }]
 python = "^3.12"
 pandas = "^2.2"
 scikit-learn = "^1.5"
+matplotlib = "^3.9"
 metabo_adni = "0.5.8"
 
 [tool.poetry.scripts]
 pls_da = "momics_ad.commands.pls_da:main"
 sex_diff = "momics_ad.commands.sex_diff:main"
+make_plots = "momics_ad.commands.make_plots:main"
 
 [build-system]
 requires = ["poetry-core"]
@@ -32,4 +34,3 @@ build-backend = "poetry.core.masonry.api"
 include = ["src"]
 venv = "momics_ad_env"
 venvPath = "/home/tomas/miniforge3/envs/"
-
