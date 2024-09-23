@@ -30,13 +30,7 @@ def main():
     model_red = sd.get_model_matrix(X, full=False)
     contrast = [[0, 1, 2], [3, 4, 5]]
     # Estimate LS vectors
-    f_c = [1, 0, 0, 0, 0, 0]
-    f_m = [1, 0, 1, 0, 0, 0]
-    f_d = [1, 1, 0, 0, 0, 0]
-    m_c = [1, 0, 0, 1, 0, 0]
-    m_m = [1, 0, 1, 1, 0, 1]
-    m_d = [1, 1, 0, 1, 1, 0]
-    x_ls_full = np.array([f_c, f_m, f_d, m_c, m_m, m_d])
+    x_ls_full = sd._get_ls_vectors()
     delta, angle, shape = sd.estimate_difference(Y, model_full, x_ls_full, contrast)
     deltas, angles, shapes = sd.RRPP(
         Y, model_full, model_red, x_ls_full, contrast, args.I

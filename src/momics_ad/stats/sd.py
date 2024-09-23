@@ -421,3 +421,23 @@ def _OPA(M1: np.ndarray, M2: np.ndarray) -> np.ndarray:
     H = np.matmul(V, np.matmul(D, U.transpose()))
     Mp2 = np.matmul(M2, H)
     return Mp2
+
+
+def _get_ls_vectors() -> np.ndarray:
+    """
+    Generate a least-squares vectors matrix, with intercept and interaction.
+
+    Returns
+    -------
+    ls_matrix: np.ndarray
+        LS vector matrix.
+    """
+    f_c = [1, 0, 0, 0, 0, 0]
+    f_m = [1, 0, 1, 0, 0, 0]
+    f_d = [1, 1, 0, 0, 0, 0]
+    m_c = [1, 0, 0, 1, 0, 0]
+    m_m = [1, 0, 1, 1, 0, 1]
+    m_d = [1, 1, 0, 1, 1, 0]
+    ls_matrix = np.array([f_c, f_m, f_d, m_c, m_m, m_d])
+
+    return ls_matrix
