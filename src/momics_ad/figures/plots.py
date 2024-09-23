@@ -1,3 +1,5 @@
+import math
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,7 +25,7 @@ def scatter_plot(scores: pd.DataFrame):
         how_many_rows = 1
     else:
         how_many_cols = 2
-        how_many_rows = round(how_many_axes / how_many_cols)
+        how_many_rows = math.ceil(how_many_axes / how_many_cols)
 
     fig = plt.figure(figsize=(12, how_many_rows * 6))
     spec = fig.add_gridspec(ncols=how_many_cols, nrows=how_many_rows)
@@ -62,6 +64,7 @@ def scatter_plot(scores: pd.DataFrame):
                     ax.annotate(i, (x + offset, y + offset))
             if (plot_number / 2).is_integer():
                 ax_row = ax_row + 1
+                ax_col = 0
             else:
                 ax_col = ax_col + 1
             plot_number = plot_number + 1
