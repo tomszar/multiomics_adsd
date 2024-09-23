@@ -269,6 +269,30 @@ def estimate_betas(
     return betas
 
 
+def get_means(X, Y) -> pd.DataFrame:
+    """
+    Get means, or observed vectores, from standard LS vectors.
+
+    Parameters
+    ----------
+    X: pd.DataFrame
+        X matrix of responses.
+    Y: pd.DataFrame
+        Y matrix of outcomes.
+
+    Returns
+    -------
+    means: pd.DataFrame
+        Mean values.
+    """
+    model_full = get_model_matrix(X)
+    betas = estimate_betas(model_full, Y)
+    ls_matrix = _get_ls_vectors()
+    means = np.matmul(ls_matrix, betas)
+
+    return means
+
+
 def _estimate_size(obs_vect: pd.DataFrame, levels: list[int]) -> int:
     """
     Estimate the size of a trajectory of two or more levels.

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from momics_ad.io import subset
 from momics_ad.stats import sd
 
 
@@ -18,14 +19,9 @@ def scatter_plot(scores: pd.DataFrame):
         Dataframe with scores, sex, and diagnosis columns,
         as obtained from the pls_da command.
     """
-    last_col = scores.columns.get_loc("DX") - 1
     # Get mean coordinates
-    X = scores.loc[:, ["DX", "PTGENDER"]]
-    Y = scores.iloc[:, : last_col + 1]
-    model_full = sd.get_model_matrix(X)
-    betas = sd.estimate_betas(model_full, Y)
-    ls_matrix = sd._get_ls_vectors()
-    means = np.matmul(ls_matrix, betas)
+    X, Y = subset.get_XY(scores)
+    means = sd.get_means(X, Y)
     # Get colors and coordinates by label
     tab20b = plt.get_cmap("tab20b")
     label_main_colors = {
@@ -48,6 +44,7 @@ def scatter_plot(scores: pd.DataFrame):
         "Male MCI": means.iloc[4, :],
         "Male AD": means.iloc[5, :],
     }
+    last_col = scores.columns.get_loc("DX") - 1
     how_many_axes = int((last_col + 1) / 2)
     if how_many_axes == 1:
         how_many_cols = 1
@@ -58,7 +55,7 @@ def scatter_plot(scores: pd.DataFrame):
 
     fig = plt.figure(figsize=(12, how_many_rows * 6))
     spec = fig.add_gridspec(ncols=how_many_cols, nrows=how_many_rows)
-    offset = 0.5
+    # offset = 0.5
     plot_number = 1
     ax_col = 0
     ax_row = 0
@@ -103,6 +100,29 @@ def scatter_plot(scores: pd.DataFrame):
                 looping = False
     fig.tight_layout()
     fig.savefig("ScatterPlot.pdf", dpi=600)
+
+
+def line_plot(scores: pd.DataFrame):
+    """
+    Trajectory plot ordered by diagnoses (CN, MCI, AD) and in ordered dimensions.
+
+    Parameters
+    ----------
+    scores: pd.DataFrame
+        Dataframe with scores, sex, and diagnosis columns,
+        as obtained from the pls_da command.
+    """
+    # Get mean coordinates
+    X, Y = subset.get_XY(scores)
+    means = sd.get_means(X, Y)
+    females = means.iloc[0:3, :].to_numpy().T.flatten()
+    males = means.iloc[3:, :].to_numpy().T.flatten()
+    fig = plt.figure(figsize=(12, 6))
+    ax = fig.add_subplot()
+    ax.plot(females)
+    ax.plot(males)
+    fig.tight_layout()
+    fig.savefig("LinePlot.pdf", dpi=600)
 
 
 def cor_plot(dat: pd.DataFrame):

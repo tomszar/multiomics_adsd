@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from momics_ad.io import read
+from momics_ad.io import read, subset
 from momics_ad.stats import sd
 
 
@@ -23,9 +23,7 @@ def main():
     args = parser.parse_args()
     x_scores = read.read_xscores()
     x_center = sd.center_matrix(x_scores)
-    last_col = str(x_center.columns.get_loc("DX") - 1)
-    X = x_center.loc[:, ["DX", "PTGENDER"]]
-    Y = x_center.loc[:, :last_col]
+    X, Y = subset.get_XY(x_center)
     model_full = sd.get_model_matrix(X)
     model_red = sd.get_model_matrix(X, full=False)
     contrast = [[0, 1, 2], [3, 4, 5]]
