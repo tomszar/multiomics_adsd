@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from momics_ad.stats import sd
+
 
 def scatter_plot(scores: pd.DataFrame):
     """
@@ -16,9 +18,36 @@ def scatter_plot(scores: pd.DataFrame):
         Dataframe with scores, sex, and diagnosis columns,
         as obtained from the pls_da command.
     """
-    dark2 = plt.get_cmap("Dark2")
-    label_colors = {"Female": dark2(0), "Male": dark2(1)}
     last_col = scores.columns.get_loc("DX") - 1
+    # Get mean coordinates
+    X = scores.loc[:, ["DX", "PTGENDER"]]
+    Y = scores.iloc[:, : last_col + 1]
+    model_full = sd.get_model_matrix(X)
+    betas = sd.estimate_betas(model_full, Y)
+    ls_matrix = sd._get_ls_vectors()
+    means = np.matmul(ls_matrix, betas)
+    # Get colors and coordinates by label
+    tab20b = plt.get_cmap("tab20b")
+    label_main_colors = {
+        "Female": tab20b(0),
+        "Male": tab20b(4),
+    }
+    label_colors = {
+        "Female Control": tab20b(1),
+        "Female MCI": tab20b(2),
+        "Female AD": tab20b(3),
+        "Male Control": tab20b(5),
+        "Male MCI": tab20b(6),
+        "Male AD": tab20b(7),
+    }
+    label_coords = {
+        "Female Control": means.iloc[0, :],
+        "Female MCI": means.iloc[1, :],
+        "Female AD": means.iloc[2, :],
+        "Male Control": means.iloc[3, :],
+        "Male MCI": means.iloc[4, :],
+        "Male AD": means.iloc[5, :],
+    }
     how_many_axes = int((last_col + 1) / 2)
     if how_many_axes == 1:
         how_many_cols = 1
@@ -37,31 +66,33 @@ def scatter_plot(scores: pd.DataFrame):
     while looping:
         for idx1 in range(0, last_col + 1, 2):
             ax = fig.add_subplot(spec[ax_row, ax_col])
-            for key, value in label_colors.items():
-                means = (
-                    scores.loc[scores["PTGENDER"] == key, "0":"DX"].groupby("DX").mean()
-                )
+            # Set manual limits
+            ax.set_xlim(-4, 4)
+            ax.set_ylim(-4, 4)
+            for main_key, main_value in label_main_colors.items():
                 ax.scatter(
-                    scores.loc[scores["PTGENDER"] == key, str(idx1)],
-                    scores.loc[scores["PTGENDER"] == key, str(idx1 + 1)],
-                    color=value,
-                    alpha=0.3,
+                    scores.loc[scores["PTGENDER"] == main_key, str(idx1)],
+                    scores.loc[scores["PTGENDER"] == main_key, str(idx1 + 1)],
+                    color=main_value,
+                    alpha=0.1,
                 )
-                ax.plot(
-                    means.loc[:, str(idx1)],
-                    means.loc[:, str(idx1 + 1)],
-                    color=value,
-                )
-                for i, rows in means.iterrows():
-                    x = means.loc[i, str(idx1)]
-                    y = means.loc[i, str(idx1 + 1)]
-                    ax.scatter(
-                        x,
-                        y,
-                        s=60,
-                        color=value,
+                if main_key == "Female":
+                    ax.plot(
+                        means.iloc[:3, idx1],
+                        means.iloc[:3, idx1 + 1],
+                        color=main_value,
                     )
-                    ax.annotate(i, (x + offset, y + offset))
+                else:
+                    ax.plot(
+                        means.iloc[3:, idx1],
+                        means.iloc[3:, idx1 + 1],
+                        color=main_value,
+                    )
+            for key, value in label_colors.items():
+                x = label_coords[key].iloc[idx1]
+                y = label_coords[key].iloc[idx1 + 1]
+                ax.scatter(x, y, s=70, color=value)
+                # ax.annotate(key, (x + offset, y + offset))
             if (plot_number / 2).is_integer():
                 ax_row = ax_row + 1
                 ax_col = 0
