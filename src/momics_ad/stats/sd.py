@@ -269,9 +269,9 @@ def estimate_betas(
     return betas
 
 
-def get_means(X, Y) -> pd.DataFrame:
+def get_observed_vectors(X, Y) -> pd.DataFrame:
     """
-    Get means, or observed vectores, from standard LS vectors.
+    Get means, or observed vectors, from standard LS vectors.
 
     Parameters
     ----------

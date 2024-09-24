@@ -16,6 +16,6 @@ def main():
     # Scatter plots
     plots.scatter_plot(x_center)
     # Line plots
-    plots.line_plot(x_center)
+    plots.orientation_plot(x_center)
     # Correlation plot
     plots.cor_plot(metabolomics)

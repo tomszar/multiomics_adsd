@@ -21,7 +21,7 @@ def scatter_plot(scores: pd.DataFrame):
     """
     # Get mean coordinates
     X, Y = subset.get_XY(scores)
-    means = sd.get_means(X, Y)
+    obs_vect = sd.get_observed_vectors(X, Y)
     # Get colors and coordinates by label
     tab20b = plt.get_cmap("tab20b")
     label_main_colors = {
@@ -37,12 +37,12 @@ def scatter_plot(scores: pd.DataFrame):
         "Male AD": tab20b(7),
     }
     label_coords = {
-        "Female Control": means.iloc[0, :],
-        "Female MCI": means.iloc[1, :],
-        "Female AD": means.iloc[2, :],
-        "Male Control": means.iloc[3, :],
-        "Male MCI": means.iloc[4, :],
-        "Male AD": means.iloc[5, :],
+        "Female Control": obs_vect.iloc[0, :],
+        "Female MCI": obs_vect.iloc[1, :],
+        "Female AD": obs_vect.iloc[2, :],
+        "Male Control": obs_vect.iloc[3, :],
+        "Male MCI": obs_vect.iloc[4, :],
+        "Male AD": obs_vect.iloc[5, :],
     }
     last_col = scores.columns.get_loc("DX") - 1
     how_many_axes = int((last_col + 1) / 2)
@@ -75,14 +75,14 @@ def scatter_plot(scores: pd.DataFrame):
                 )
                 if main_key == "Female":
                     ax.plot(
-                        means.iloc[:3, idx1],
-                        means.iloc[:3, idx1 + 1],
+                        obs_vect.iloc[:3, idx1],
+                        obs_vect.iloc[:3, idx1 + 1],
                         color=main_value,
                     )
                 else:
                     ax.plot(
-                        means.iloc[3:, idx1],
-                        means.iloc[3:, idx1 + 1],
+                        obs_vect.iloc[3:, idx1],
+                        obs_vect.iloc[3:, idx1 + 1],
                         color=main_value,
                     )
             for key, value in label_colors.items():
@@ -102,9 +102,10 @@ def scatter_plot(scores: pd.DataFrame):
     fig.savefig("ScatterPlot.pdf", dpi=600)
 
 
-def line_plot(scores: pd.DataFrame):
+def orientation_plot(scores: pd.DataFrame):
     """
-    Trajectory plot ordered by diagnoses (CN, MCI, AD) and in ordered dimensions.
+    Trajectory plot ordered by diagnoses (CN, MCI, AD) and
+    in ordered dimensions.
 
     Parameters
     ----------
@@ -112,17 +113,24 @@ def line_plot(scores: pd.DataFrame):
         Dataframe with scores, sex, and diagnosis columns,
         as obtained from the pls_da command.
     """
+    tab20b = plt.get_cmap("tab20b")
     # Get mean coordinates
     X, Y = subset.get_XY(scores)
-    means = sd.get_means(X, Y)
-    females = means.iloc[0:3, :].to_numpy().T.flatten()
-    males = means.iloc[3:, :].to_numpy().T.flatten()
+    obs_vect = sd.get_observed_vectors(X, Y)
+    contrast = [[0, 1, 2], [3, 4, 5]]
+    n_groups = len(contrast)
+    ys = []
+    for i in range(n_groups):
+        y = sd._estimate_orientation(obs_vect, contrast[i])
+        ys.append(y)
     fig = plt.figure(figsize=(12, 6))
     ax = fig.add_subplot()
-    ax.plot(females)
-    ax.plot(males)
+    ax.plot(ys[0], color=tab20b(0))
+    ax.plot(ys[1], color=tab20b(4))
+    ax.set_xlabel("Coordinates")
+    ax.set_xticks(ticks=[0, 1, 2, 3], labels=["1", "2", "3", "4"])
     fig.tight_layout()
-    fig.savefig("LinePlot.pdf", dpi=600)
+    fig.savefig("OrientationPlot.pdf", dpi=600)
 
 
 def cor_plot(dat: pd.DataFrame):
