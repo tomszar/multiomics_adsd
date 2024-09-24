@@ -73,6 +73,8 @@ def scatter_plot(scores: pd.DataFrame):
                     color=main_value,
                     alpha=0.1,
                 )
+                ax.set_xlabel("Coordiante " + str(idx1 + 1))
+                ax.set_ylabel("Coordinate " + str(idx1 + 2))
                 if main_key == "Female":
                     ax.plot(
                         obs_vect.iloc[:3, idx1],
@@ -144,7 +146,7 @@ def cor_plot(dat: pd.DataFrame):
     """
     fig, ax = plt.subplots(figsize=(28, 28))
     cor_matrix = dat.corr()
-    ax.imshow(cor_matrix, cmap="RdBu")
+    ax.imshow(cor_matrix, cmap="coolwarm")
     ax.set_xticks(np.arange(len(cor_matrix)), labels=cor_matrix.index)
     plt.setp(
         ax.get_xticklabels(),
