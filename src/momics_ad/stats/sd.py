@@ -321,7 +321,10 @@ def _estimate_size(obs_vect: pd.DataFrame, levels: list[int]) -> int:
     return size
 
 
-def _estimate_orientation(obs_vect: pd.DataFrame, levels: list[int]) -> np.ndarray:
+def _estimate_orientation(
+    obs_vect: pd.DataFrame,
+    levels: list[int],
+) -> np.ndarray:
     """
     Estimate the orientation of a trajectory of two or more levels.
 
