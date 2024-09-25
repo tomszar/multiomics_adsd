@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from momics_ad.io import read
+from momics_ad.io import read, subset
 from momics_ad.stats import sd
 
 
@@ -23,20 +23,12 @@ def main():
     args = parser.parse_args()
     x_scores = read.read_xscores()
     x_center = sd.center_matrix(x_scores)
-    last_col = str(x_center.columns.get_loc("DX") - 1)
-    X = x_center.loc[:, ["DX", "PTGENDER"]]
-    Y = x_center.loc[:, :last_col]
+    X, Y = subset.get_XY(x_center)
     model_full = sd.get_model_matrix(X)
     model_red = sd.get_model_matrix(X, full=False)
     contrast = [[0, 1, 2], [3, 4, 5]]
     # Estimate LS vectors
-    f_c = [1, 0, 0, 0, 0, 0]
-    f_m = [1, 0, 1, 0, 0, 0]
-    f_d = [1, 1, 0, 0, 0, 0]
-    m_c = [1, 0, 0, 1, 0, 0]
-    m_m = [1, 0, 1, 1, 0, 1]
-    m_d = [1, 1, 0, 1, 1, 0]
-    x_ls_full = np.array([f_c, f_m, f_d, m_c, m_m, m_d])
+    x_ls_full = sd._get_ls_vectors()
     delta, angle, shape = sd.estimate_difference(Y, model_full, x_ls_full, contrast)
     deltas, angles, shapes = sd.RRPP(
         Y, model_full, model_red, x_ls_full, contrast, args.I

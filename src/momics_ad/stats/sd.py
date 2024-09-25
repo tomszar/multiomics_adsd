@@ -269,6 +269,30 @@ def estimate_betas(
     return betas
 
 
+def get_observed_vectors(X, Y) -> pd.DataFrame:
+    """
+    Get means, or observed vectors, from standard LS vectors.
+
+    Parameters
+    ----------
+    X: pd.DataFrame
+        X matrix of responses.
+    Y: pd.DataFrame
+        Y matrix of outcomes.
+
+    Returns
+    -------
+    means: pd.DataFrame
+        Mean values.
+    """
+    model_full = get_model_matrix(X)
+    betas = estimate_betas(model_full, Y)
+    ls_matrix = _get_ls_vectors()
+    means = np.matmul(ls_matrix, betas)
+
+    return means
+
+
 def _estimate_size(obs_vect: pd.DataFrame, levels: list[int]) -> int:
     """
     Estimate the size of a trajectory of two or more levels.
@@ -297,7 +321,10 @@ def _estimate_size(obs_vect: pd.DataFrame, levels: list[int]) -> int:
     return size
 
 
-def _estimate_orientation(obs_vect: pd.DataFrame, levels: list[int]) -> np.ndarray:
+def _estimate_orientation(
+    obs_vect: pd.DataFrame,
+    levels: list[int],
+) -> np.ndarray:
     """
     Estimate the orientation of a trajectory of two or more levels.
 
@@ -319,7 +346,7 @@ def _estimate_orientation(obs_vect: pd.DataFrame, levels: list[int]) -> np.ndarr
     vect = obs_vect.iloc[levels, :]
     k = vect.shape[1]
     # SVD
-    U, D, V = np.linalg.svd(np.cov(vect.transpose()))
+    _, _, V = np.linalg.svd(np.cov(vect.transpose()))
     orientation = V.transpose()[:k, 0]
     # Check sing
     c1 = np.matmul(orientation, vect.iloc[0, :])
@@ -421,3 +448,23 @@ def _OPA(M1: np.ndarray, M2: np.ndarray) -> np.ndarray:
     H = np.matmul(V, np.matmul(D, U.transpose()))
     Mp2 = np.matmul(M2, H)
     return Mp2
+
+
+def _get_ls_vectors() -> np.ndarray:
+    """
+    Generate a least-squares vectors matrix, with intercept and interaction.
+
+    Returns
+    -------
+    ls_matrix: np.ndarray
+        LS vector matrix.
+    """
+    f_c = [1, 0, 0, 0, 0, 0]
+    f_m = [1, 0, 1, 0, 0, 0]
+    f_d = [1, 1, 0, 0, 0, 0]
+    m_c = [1, 0, 0, 1, 0, 0]
+    m_m = [1, 0, 1, 1, 0, 1]
+    m_d = [1, 1, 0, 1, 1, 0]
+    ls_matrix = np.array([f_c, f_m, f_d, m_c, m_m, m_d])
+
+    return ls_matrix
