@@ -346,7 +346,7 @@ def _estimate_orientation(
     vect = obs_vect.iloc[levels, :]
     k = vect.shape[1]
     # SVD
-    U, D, V = np.linalg.svd(np.cov(vect.transpose()))
+    _, _, V = np.linalg.svd(np.cov(vect.transpose()))
     orientation = V.transpose()[:k, 0]
     # Check sing
     c1 = np.matmul(orientation, vect.iloc[0, :])
