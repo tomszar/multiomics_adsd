@@ -34,7 +34,12 @@ def main():
     m = read.read_metabolomics()
     X = m.iloc[:, :-1]
     Y = m.iloc[:, -1]
-    model_table = pls.plsda_doubleCV(X, Y, n_repeats=args.R, max_components=args.C)
+    model_table = pls.plsda_doubleCV(
+        X,
+        Y,
+        n_repeats=args.R,
+        max_components=args.C,
+    )
     i_b_m = model_table["table"].iloc[:, 2].idxmax()
     best_mod = model_table["models"][i_b_m]
     xscores = pd.DataFrame(best_mod.transform(X))
