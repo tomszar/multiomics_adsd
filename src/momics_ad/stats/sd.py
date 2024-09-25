@@ -345,6 +345,8 @@ def _estimate_orientation(
     # N of dimensions
     vect = obs_vect.iloc[levels, :]
     k = vect.shape[1]
+    # Center matrix
+    vect -= np.mean(vect, axis=0)
     # SVD
     _, _, V = np.linalg.svd(np.cov(vect.transpose()))
     orientation = V.transpose()[:k, 0]

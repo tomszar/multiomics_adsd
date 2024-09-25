@@ -40,4 +40,6 @@ def main():
     xscores = pd.DataFrame(best_mod.transform(X))
     xscores.index = X.index
     xscores.to_csv("Xscores.csv")
+    vips = pls._calculate_vips(best_mod)
+    pd.DataFrame(vips).to_csv("VIPS.csv")
     model_table["table"].to_csv("ModelTable.csv")
