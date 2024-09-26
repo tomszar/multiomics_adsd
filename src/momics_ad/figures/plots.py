@@ -166,3 +166,22 @@ def cor_plot(dat: pd.DataFrame):
     ax.spines[:].set_visible(False)
     fig.tight_layout()
     fig.savefig("CorPlot.pdf", dpi=200)
+
+
+def vip_plot(dat: pd.DataFrame, fnames: list[str]):
+    """
+    Generate a Manhattan Plot style with VIPs.
+
+    Parameteres
+    -----------
+    dat: pd.DataFrame
+        VIP dataframe as generated from pls_da command.
+    fnames: list[str]
+        List of feature names.
+    """
+    fig, ax = plt.subplots(figsize=(60, 6))
+    ax.scatter(y=dat.iloc[:, 0], x=fnames)  # list(range(len(dat))))
+    ax.hlines(1.2, xmin=0, xmax=len(dat), colors="r", linestyles="dashed")
+    ax.tick_params(axis="x", labelrotation=90)
+    fig.tight_layout()
+    fig.savefig("VIPPlot.pdf", dpi=300)
