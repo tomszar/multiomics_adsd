@@ -168,7 +168,10 @@ def _plsda_auroc(
     return auroc
 
 
-def _calculate_vips(model):
+def _calculate_vips(
+    model,
+    components: Union[None, list[int]] = None,
+) -> np.ndarray:
     """
     Estimates Variable Importance in Projection (VIP)
     in Partial Least Squares (PLS)
@@ -177,16 +180,27 @@ def _calculate_vips(model):
     ----------
     model: PLSRegression
         model generated from the PLSRegression function
+    components: Union[None, list[int]]
+        if not None, a list of integers indicating the components to compute
+        the VIPs from. If None, all components are taken into account.
+        Default None.
 
     Returns
     -------
     vips: np.array
         variable importance in projection for each variable
     """
-    t = model.x_scores_
-    w = model.x_weights_
-    q = model.y_loadings_
-    p, h = w.shape
+    if components is not None:
+        t = model.x_scores_[:, components]
+        w = model.x_weights_[:, components]
+        q = model.y_loadings_[:, components]
+        p, h = w.shape
+    else:
+        w = model.x_weights_
+        t = model.x_scores_
+        q = model.y_loadings_
+        p, h = w.shape
+
     vips = np.zeros((p,))
     s = np.diag(np.matmul(np.matmul(np.matmul(t.T, t), q.T), q)).reshape(h, -1)
     total_s = np.sum(s)
