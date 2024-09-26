@@ -130,7 +130,9 @@ def orientation_plot(scores: pd.DataFrame):
     ax.plot(ys[0], color=tab20b(0))
     ax.plot(ys[1], color=tab20b(4))
     ax.set_xlabel("Coordinates")
-    ax.set_xticks(ticks=[0, 1, 2, 3], labels=["1", "2", "3", "4"])
+    ticks = list(range(obs_vect.shape[1]))
+    labels = [str(i + 1) for i in ticks]
+    ax.set_xticks(ticks=ticks, labels=labels)
     fig.tight_layout()
     fig.savefig("OrientationPlot.pdf", dpi=600)
 
