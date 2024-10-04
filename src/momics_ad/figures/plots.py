@@ -137,7 +137,12 @@ def orientation_plot(scores: pd.DataFrame):
     fig.savefig("OrientationPlot.pdf", dpi=600)
 
 
-def cor_plot(dat: pd.DataFrame):
+def cor_plot(
+    dat: pd.DataFrame,
+    filename: str = "CorPlot",
+    estimate_cor: bool = True,
+    colormap: str = "coolwarm",
+):
     """
     Generate a correlation plot out of multiple variables.
 
@@ -145,10 +150,25 @@ def cor_plot(dat: pd.DataFrame):
     ----------
     dat: pd.DataFrame
         Data frame with the variables to generate a correlation plot.
+    filename: str
+        Name of the file to use. Default CorPlot.
+    estimate_cor: bool
+        Whether to estimate the correlation from the dat data frame.
+        If False, it assumes the correlation, or similar metric, is
+        already used in dat. Default True.
+    colormap: str
+        Colormap to use. Default coolwarm.
     """
     fig, ax = plt.subplots(figsize=(28, 28))
-    cor_matrix = dat.corr()
-    ax.imshow(cor_matrix, cmap="coolwarm")
+    if estimate_cor:
+        cor_matrix = dat.corr()
+    else:
+        cor_matrix = dat
+    ax.imshow(
+        cor_matrix,
+        cmap=colormap,
+        norm="log",
+    )
     ax.set_xticks(np.arange(len(cor_matrix)), labels=cor_matrix.index)
     plt.setp(
         ax.get_xticklabels(),
@@ -167,7 +187,7 @@ def cor_plot(dat: pd.DataFrame):
     )  # labels along the bottom edge are off
     ax.spines[:].set_visible(False)
     fig.tight_layout()
-    fig.savefig("CorPlot.pdf", dpi=200)
+    fig.savefig(filename + ".pdf", dpi=200)
 
 
 def vip_plot(dat: pd.DataFrame, fnames: list[str]):

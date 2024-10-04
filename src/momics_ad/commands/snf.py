@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
+from momics_ad.figures import plots
 from momics_ad.stats import snf
 
 
@@ -20,6 +21,15 @@ def main():
         dats[i] = scaler.fit_transform(dats[i])
         dats[i] = np.array(dats[i])
     Ws = snf.get_affinity_matrix(dats, 20, 0.5)
+    for i, W in enumerate(Ws):
+        name = "Aff" + str(i)
+        np.fill_diagonal(W, 0)
+        plots.cor_plot(
+            pd.DataFrame(W),
+            filename=name,
+            estimate_cor=False,
+            colormap="Reds",
+        )
 
     # Affinity matrices are okay, but fused networks are different from R
     # But my implementation looks more similar, keep with mine
