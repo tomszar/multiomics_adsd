@@ -1,9 +1,8 @@
+import numpy as np
 import pandas as pd
-import snf
-from scipy.spatial.distance import cdist, pdist
 from sklearn.preprocessing import StandardScaler
 
-from momics_ad.stats.snf import _affinity_matrix, _euclidean_dist, _sparse_kernel
+from momics_ad.stats import snf
 
 
 def main():
@@ -19,19 +18,9 @@ def main():
     for i, dat in enumerate(dats):
         dats[i] = dat.loc[common_ids]
         dats[i] = scaler.fit_transform(dats[i])
+        dats[i] = np.array(dats[i])
+    Ws = snf.get_affinity_matrix(dats, 20, 0.5)
 
-    # Calculate distance
-    distance = cdist(dats[0], dats[0], metric="euclidean")
-    distance2 = pdist(dats[0], metric="euclidean")
-    distance3 = _euclidean_dist(pd.DataFrame(dats[0]))
-
-    Ws = snf.make_affinity(
-        dats,
-        metric="euclidean",
-        K=20,
-        mu=0.5,
-    )
-    # All two affinity is different from the one in R,
-    aff = _affinity_matrix(distance, 20, 0.5)
-
-    fused_network = snf.snf(Ws, K=20)
+    # Affinity matrices are okay, but fused networks are different from R
+    # But my implementation looks more similar, keep with mine
+    fn = snf.SNF(Ws)

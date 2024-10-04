@@ -2,6 +2,8 @@ import itertools
 
 import numpy as np
 import pandas as pd
+from scipy import stats
+from scipy.spatial.distance import cdist
 
 
 def SNF(Ws: list[np.ndarray], k: int = 20, t: int = 20) -> np.ndarray:
@@ -51,6 +53,36 @@ def SNF(Ws: list[np.ndarray], k: int = 20, t: int = 20) -> np.ndarray:
 
     Pc = (Pst1[0] + Pst1[1]) / 2
     return Pc
+
+
+def get_affinity_matrix(
+    dats: list[np.ndarray], K: int = 20, eps: float = 0.5
+) -> list[np.ndarray]:
+    """
+    Estimate the affinity matrix for all datasets in dats from the squared Euclidean
+    distance.
+
+    Parameters
+    ----------
+    dats: list[np.ndarray]
+        list of data sets to estimate the affinity matrix.
+    K: int
+        Number of K nearest neighbors to use. Default 20.
+    eps: float
+        Normalization factor. Recommended between 0.3 and 0.8. Default 0.5.
+
+    Returns
+    -------
+    Ws: list[np.ndarray]
+        list of affinity matrices
+    """
+    nrows = len(dats[0])
+    Ws = [np.zeros((nrows, nrows)), np.zeros((nrows, nrows))]
+    for i, dat in enumerate(dats):
+        euc_dist = cdist(dat, dat, metric="euclidean") ** 2
+        Ws[i] = _affinity_matrix(euc_dist, K, eps)
+
+    return Ws
 
 
 def _full_kernel(W: np.ndarray) -> np.ndarray:
@@ -110,14 +142,9 @@ def _euclidean_dist(dat: pd.DataFrame) -> np.ndarray:
     Calculate the pairwise Euclidean distance between
     all the rows of a dataframe
     """
-    euc_dist = np.zeros((len(dat), len(dat)))
-    euc_dist = pd.DataFrame(euc_dist)
+    euc_dist = cdist(dat, dat, metric="euclidean")
     euc_dist.index = dat.index
     euc_dist.columns = dat.index
-    for i, j in itertools.combinations(dat.index, 2):
-        d_ij = np.linalg.norm(dat.loc[i] - dat.loc[j])
-        euc_dist.loc[i, j] = d_ij
-        euc_dist.loc[j, i] = d_ij
 
     return euc_dist
 
@@ -125,12 +152,15 @@ def _euclidean_dist(dat: pd.DataFrame) -> np.ndarray:
 def _affinity_matrix(mat, K, eps):
     Machine_Epsilon = np.finfo(float).eps
     Diff_mat = (mat + mat.transpose()) / 2
+    # Sort distance matrix ascending order
+    # (i.e. more similar is closer to first column)
     Diff_mat_sort = Diff_mat - np.diag(np.diag(Diff_mat))
-    Diff_mat_sort = np.sort(Diff_mat_sort, axis=0)
+    Diff_mat_sort = np.sort(Diff_mat_sort, axis=1)
+    # Average distance with K nearest neighbors
+    K_dist = np.mean(Diff_mat_sort[:, 1 : (K + 1)], axis=1) + Machine_Epsilon
+    sigma = ((np.add.outer(K_dist, K_dist) + Diff_mat) / 3) + Machine_Epsilon
+    sigma[sigma < Machine_Epsilon] = Machine_Epsilon
 
-    K_dist = np.mean(Diff_mat_sort[:K], axis=0)
-    epsilon = (K_dist + K_dist.transpose()) / 3 * 2 + Diff_mat / 3 + Machine_Epsilon
-
-    W = np.exp(-(Diff_mat / (eps * epsilon)))
+    W = stats.norm.pdf(Diff_mat, loc=0, scale=(eps * sigma))
 
     return (W + W.transpose()) / 2
