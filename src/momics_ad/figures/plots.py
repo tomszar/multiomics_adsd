@@ -20,6 +20,7 @@ def scatter_plot(scores: pd.DataFrame):
         Dataframe with scores, sex, and diagnosis columns,
         as obtained from the pls_da command.
     """
+    _check_dir()
     # Get mean coordinates
     X, Y = subset.get_XY(scores)
     obs_vect = sd.get_observed_vectors(X, Y)
@@ -102,7 +103,7 @@ def scatter_plot(scores: pd.DataFrame):
             if plot_number > how_many_axes:
                 looping = False
     fig.tight_layout()
-    fig.savefig("ScatterPlot.pdf", dpi=600)
+    fig.savefig("plots/ScatterPlot.pdf", dpi=600)
 
 
 def diagnostic_plots(dat: pd.DataFrame):
@@ -150,6 +151,7 @@ def orientation_plot(scores: pd.DataFrame):
         Dataframe with scores, sex, and diagnosis columns,
         as obtained from the pls_da command.
     """
+    _check_dir()
     tab20b = plt.get_cmap("tab20b")
     # Get mean coordinates
     X, Y = subset.get_XY(scores)
@@ -169,7 +171,7 @@ def orientation_plot(scores: pd.DataFrame):
     labels = [str(i + 1) for i in ticks]
     ax.set_xticks(ticks=ticks, labels=labels)
     fig.tight_layout()
-    fig.savefig("OrientationPlot.pdf", dpi=600)
+    fig.savefig("plots/OrientationPlot.pdf", dpi=600)
 
 
 def cor_plot(
@@ -194,6 +196,7 @@ def cor_plot(
     colormap: str
         Colormap to use. Default coolwarm.
     """
+    _check_dir()
     fig, ax = plt.subplots(figsize=(28, 28))
     if estimate_cor:
         cor_matrix = dat.corr()
@@ -222,7 +225,7 @@ def cor_plot(
     )  # labels along the bottom edge are off
     ax.spines[:].set_visible(False)
     fig.tight_layout()
-    fig.savefig(filename + ".pdf", dpi=200)
+    fig.savefig("plots/" + filename + ".pdf", dpi=200)
 
 
 def vip_plot(dat: pd.DataFrame, fnames: list[str]):
@@ -236,12 +239,13 @@ def vip_plot(dat: pd.DataFrame, fnames: list[str]):
     fnames: list[str]
         List of feature names.
     """
+    _check_dir()
     fig, ax = plt.subplots(figsize=(60, 6))
     ax.scatter(y=dat.iloc[:, 0], x=fnames)  # list(range(len(dat))))
     ax.hlines(1.2, xmin=0, xmax=len(dat), colors="r", linestyles="dashed")
     ax.tick_params(axis="x", labelrotation=90)
     fig.tight_layout()
-    fig.savefig("VIPPlot.pdf", dpi=300)
+    fig.savefig("plots/VIPPlot.pdf", dpi=300)
 
 
 def _check_dir():
