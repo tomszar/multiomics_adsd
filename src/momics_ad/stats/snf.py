@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.spatial.distance import cdist
+from sklearn.manifold import spectral_embedding
 
 
 def SNF(Ws: list[np.ndarray], k: int = 20, t: int = 20) -> np.ndarray:
@@ -81,6 +82,24 @@ def get_affinity_matrix(
         Ws[i] = _affinity_matrix(euc_dist, K, eps)
 
     return Ws
+
+
+def get_spectral(aff: np.ndarray) -> np.ndarray:
+    """
+    Calculate spectral spectral embedding
+
+    Parameters
+    ----------
+    aff: np.ndarray
+        Affinity matrix to calculate the spectral embedding.
+
+    Returns
+    -------
+    embedding: np.ndarray
+        Spectral embedding.
+    """
+    embedding = spectral_embedding(aff, n_components=2, random_state=1548)
+    return embedding
 
 
 def _full_kernel(W: np.ndarray) -> np.ndarray:

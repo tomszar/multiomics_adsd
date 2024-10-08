@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cdist
-from sklearn.preprocessing import StandardScaler
 
 from momics_ad.figures import plots
 from momics_ad.stats import snf
@@ -47,3 +46,4 @@ def main():
         estimate_cor=False,
         colormap="Reds",
     )
+    embedding = snf.get_spectral(fn)
