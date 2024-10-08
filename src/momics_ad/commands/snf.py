@@ -16,7 +16,6 @@ def main():
     nmr = pd.read_csv("NMR.csv").set_index("RID")
     dats = [p180, nmr]
     common_ids = p180.merge(nmr, how="inner", on="RID").index
-    scaler = StandardScaler()
     for i, dat in enumerate(dats):
         dats[i] = dat.loc[common_ids]
         plots.diagnostic_plots(dat)
@@ -27,7 +26,6 @@ def main():
             estimate_cor=False,
             colormap="Reds",
         )
-        # dats[i] = scaler.fit_transform(dats[i])
         dats[i] = np.array(dats[i])
     Ws = snf.get_affinity_matrix(dats, 20, 0.5)
     for i, W in enumerate(Ws):
@@ -43,3 +41,9 @@ def main():
     # Affinity matrices are okay, but fused networks are different from R
     # But my implementation looks more similar, keep with mine
     fn = snf.SNF(Ws)
+    plots.cor_plot(
+        pd.DataFrame(fn),
+        filename="FusedNet",
+        estimate_cor=False,
+        colormap="Reds",
+    )
