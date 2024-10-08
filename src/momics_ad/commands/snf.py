@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.spatial.distance import cdist
 from sklearn.preprocessing import StandardScaler
 
 from momics_ad.figures import plots
@@ -18,7 +19,15 @@ def main():
     scaler = StandardScaler()
     for i, dat in enumerate(dats):
         dats[i] = dat.loc[common_ids]
-        dats[i] = scaler.fit_transform(dats[i])
+        plots.diagnostic_plots(dat)
+        euc_dist = cdist(dat, dat, metric="euclidean")
+        plots.cor_plot(
+            pd.DataFrame(euc_dist),
+            filename="Eucdist" + str(i),
+            estimate_cor=False,
+            colormap="Reds",
+        )
+        # dats[i] = scaler.fit_transform(dats[i])
         dats[i] = np.array(dats[i])
     Ws = snf.get_affinity_matrix(dats, 20, 0.5)
     for i, W in enumerate(Ws):

@@ -1,4 +1,5 @@
 import math
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -104,6 +105,40 @@ def scatter_plot(scores: pd.DataFrame):
     fig.savefig("ScatterPlot.pdf", dpi=600)
 
 
+def diagnostic_plots(dat: pd.DataFrame):
+    """
+    Diagnostic plots of continuous distributions.
+    Originally thought to plot the metabolites values of the p180
+    and nmr platforms.
+
+    Parameters
+    ----------
+    dat: pd.DataFrame
+        Data frame in which to plot all variables.
+        Should have column names and variables are all continuous.
+    """
+    _check_dir()
+    for _, col in enumerate(dat):
+        hist_plot(dat.loc[:, col], "diagnostic_plots/" + col + ".png")
+        plt.close()
+
+
+def hist_plot(dat: pd.DataFrame | pd.Series, name: str):
+    """Plot a histogram
+
+    Parameters
+    ----------
+    dat: pd.DataFrame, pd.Series
+        Data set or series to plot.
+    name: str
+        Name of the plot, can be a path.
+    """
+    fig, ax = plt.subplots()
+    ax.hist(dat)
+    fig.tight_layout()
+    fig.savefig(name, dpi=300)
+
+
 def orientation_plot(scores: pd.DataFrame):
     """
     Trajectory plot ordered by diagnoses (CN, MCI, AD) and
@@ -207,3 +242,11 @@ def vip_plot(dat: pd.DataFrame, fnames: list[str]):
     ax.tick_params(axis="x", labelrotation=90)
     fig.tight_layout()
     fig.savefig("VIPPlot.pdf", dpi=300)
+
+
+def _check_dir():
+    """
+    Check and create directory for plots if not exists.
+    """
+    for folder in ["plots", "diagnostic_plots"]:
+        os.makedirs(folder, exist_ok=True)
