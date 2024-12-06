@@ -32,8 +32,8 @@ def main():
     )
     args = parser.parse_args()
     m = read.read_metabolomics()
-    X = m.iloc[:, :-1]
-    Y = m.iloc[:, -1]
+    X = m["nmr"].merge(m["p180"], on="RID")
+    Y = m["qt"]["DX"]
     model_table = pls.plsda_doubleCV(
         X,
         Y,

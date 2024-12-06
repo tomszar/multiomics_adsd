@@ -1,5 +1,7 @@
 import math
+import os
 
+import matplotlib.axes as axs
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -19,6 +21,7 @@ def scatter_plot(scores: pd.DataFrame):
         Dataframe with scores, sex, and diagnosis columns,
         as obtained from the pls_da command.
     """
+    _check_dir()
     # Get mean coordinates
     X, Y = subset.get_XY(scores)
     obs_vect = sd.get_observed_vectors(X, Y)
@@ -101,7 +104,58 @@ def scatter_plot(scores: pd.DataFrame):
             if plot_number > how_many_axes:
                 looping = False
     fig.tight_layout()
-    fig.savefig("ScatterPlot.pdf", dpi=600)
+    fig.savefig("plots/ScatterPlot.pdf", dpi=600)
+
+
+def diagnostic_plots(dat: pd.DataFrame, name: str):
+    """
+    Diagnostic plots of continuous distributions.
+    Originally thought to plot the metabolites values of the p180
+    and nmr platforms.
+
+    Parameters
+    ----------
+    dat: pd.DataFrame
+        Data frame in which to plot all variables.
+        Should have column names and variables are all continuous.
+    name: str
+        Name for the diagnostic plot file.
+    """
+    _check_dir()
+    n_vars = dat.shape[1] + 1
+    n_cols, n_rows = _how_many_plots(n_vars, False)
+    fig = plt.figure()
+    spec = fig.add_gridspec(ncols=n_cols, nrows=n_rows)
+    plot_number = 1
+    ax_col = 0
+    ax_row = 0
+    looping = True
+    # if n_vars > 8:  # Use multi pdf
+    #    with PdfPages("diagnostic_plots/" + name + ".pdf") as pdf:
+    while looping:
+        for _, col in enumerate(dat):
+            ax = fig.add_subplot(spec[ax_row, ax_col])
+            hist_plot(dat.loc[:, col], ax)
+        if plot_number > n_vars:
+            looping = False
+    fig.tight_layout()
+    fig.savefig("diagnostic_plots/" + name + ".pdf", dpi=300)
+
+
+def hist_plot(
+    dat: pd.DataFrame | pd.Series,
+    ax: axs.Axes,
+):
+    """Plot a histogram
+
+    Parameters
+    ----------
+    dat: pd.DataFrame, pd.Series
+        Data set or series to plot.
+    ax: axs.Axes
+        Axes object.
+    """
+    ax.hist(dat)
 
 
 def orientation_plot(scores: pd.DataFrame):
@@ -115,6 +169,7 @@ def orientation_plot(scores: pd.DataFrame):
         Dataframe with scores, sex, and diagnosis columns,
         as obtained from the pls_da command.
     """
+    _check_dir()
     tab20b = plt.get_cmap("tab20b")
     # Get mean coordinates
     X, Y = subset.get_XY(scores)
@@ -134,10 +189,15 @@ def orientation_plot(scores: pd.DataFrame):
     labels = [str(i + 1) for i in ticks]
     ax.set_xticks(ticks=ticks, labels=labels)
     fig.tight_layout()
-    fig.savefig("OrientationPlot.pdf", dpi=600)
+    fig.savefig("plots/OrientationPlot.pdf", dpi=600)
 
 
-def cor_plot(dat: pd.DataFrame):
+def cor_plot(
+    dat: pd.DataFrame,
+    filename: str = "CorPlot",
+    estimate_cor: bool = True,
+    colormap: str = "coolwarm",
+):
     """
     Generate a correlation plot out of multiple variables.
 
@@ -145,10 +205,26 @@ def cor_plot(dat: pd.DataFrame):
     ----------
     dat: pd.DataFrame
         Data frame with the variables to generate a correlation plot.
+    filename: str
+        Name of the file to use. Default CorPlot.
+    estimate_cor: bool
+        Whether to estimate the correlation from the dat data frame.
+        If False, it assumes the correlation, or similar metric, is
+        already used in dat. Default True.
+    colormap: str
+        Colormap to use. Default coolwarm.
     """
+    _check_dir()
     fig, ax = plt.subplots(figsize=(28, 28))
-    cor_matrix = dat.corr()
-    ax.imshow(cor_matrix, cmap="coolwarm")
+    if estimate_cor:
+        cor_matrix = dat.corr()
+    else:
+        cor_matrix = dat
+    ax.imshow(
+        cor_matrix,
+        cmap=colormap,
+        norm="log",
+    )
     ax.set_xticks(np.arange(len(cor_matrix)), labels=cor_matrix.index)
     plt.setp(
         ax.get_xticklabels(),
@@ -167,7 +243,7 @@ def cor_plot(dat: pd.DataFrame):
     )  # labels along the bottom edge are off
     ax.spines[:].set_visible(False)
     fig.tight_layout()
-    fig.savefig("CorPlot.pdf", dpi=200)
+    fig.savefig("plots/" + filename + ".pdf", dpi=200)
 
 
 def vip_plot(dat: pd.DataFrame, fnames: list[str]):
@@ -181,9 +257,74 @@ def vip_plot(dat: pd.DataFrame, fnames: list[str]):
     fnames: list[str]
         List of feature names.
     """
+    _check_dir()
     fig, ax = plt.subplots(figsize=(60, 6))
     ax.scatter(y=dat.iloc[:, 0], x=fnames)  # list(range(len(dat))))
     ax.hlines(1.2, xmin=0, xmax=len(dat), colors="r", linestyles="dashed")
     ax.tick_params(axis="x", labelrotation=90)
     fig.tight_layout()
-    fig.savefig("VIPPlot.pdf", dpi=300)
+    fig.savefig("plots/VIPPlot.pdf", dpi=300)
+
+
+def plot_embedding(embedding: np.ndarray, qt: pd.DataFrame):
+    """
+    Plot spectral clustering embedding.
+
+    Parameters
+    ----------
+    embedding: np.ndarray
+        Embedding matrix.
+    qt: pd.DataFrame
+        Dataframe with Sex and diagnosis data.
+    """
+    _check_dir()
+    for col in qt:
+        fig, ax = plt.subplots()
+        color = list(qt[col])
+        for c in set(color):
+            keep = qt[col] == c
+            ax.scatter(embedding[keep, 0], embedding[keep, 1])
+        fig.tight_layout()
+        fig.savefig("plots/Spectral" + col + ".pdf", dpi=300)
+        plt.close()
+
+
+def _check_dir():
+    """
+    Check and create directory for plots if not exists.
+    """
+    for folder in ["plots", "diagnostic_plots"]:
+        os.makedirs(folder, exist_ok=True)
+
+
+def _how_many_plots(n_vars: int, pairwise: bool) -> tuple[int, int]:
+    """
+    Obtain the number of rows and columns to use to plot
+    a given the number of axes. If n_vars is odd and pairwise
+    true, the number of axes does not count the last variable.
+
+    Parameters
+    ----------
+    n_vars: int
+        Number of variables to plot.
+    pairwise: bool
+        Whether the plots are intended for paiwise data.
+
+    Returns
+    -------
+    n_cols, n_rows: tuple[int, int]
+        Number of columns and rows to use.
+    """
+    # Getting number of axes
+    if pairwise:
+        n_axes = int(n_vars / 2)
+    else:
+        n_axes = n_vars
+    # Getting number of cols
+    if n_axes == 1:
+        n_cols = 1
+    else:
+        n_cols = 2
+    # Get number of rows
+    n_rows = math.ceil(n_axes / 2)
+    return n_cols, n_rows
