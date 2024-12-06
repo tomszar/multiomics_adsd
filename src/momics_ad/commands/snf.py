@@ -29,8 +29,8 @@ def main():
                 colormap="Reds",
             )
             mets_array.append(np.array(dat))
-    Ws = snf.get_affinity_matrix(mets_array, 20, 0.5)
-    for i, W in enumerate(Ws):
+    ws = snf.get_affinity_matrix(mets_array, 20, 0.5)
+    for i, W in enumerate(ws):
         name = "Aff" + labels[i]
         np.fill_diagonal(W, 0)
         plots.cor_plot(
@@ -41,16 +41,15 @@ def main():
         )
     # Affinity matrices are okay, but fused networks are different from R
     # But my implementation looks more similar, keep with mine
-    fn = snf.SNF(Ws)
+    fn = snf.SNF(ws)
     plots.cor_plot(
         pd.DataFrame(fn),
         filename="FusedNet",
         estimate_cor=False,
         colormap="Reds",
     )
-    print("embedding")
     embedding = snf.get_spectral(fn)
-    plots.plot_embedding(embedding)
+    plots.plot_embedding(embedding, mets["qt"])
     embedding = pd.DataFrame(embedding)
     embedding.index = mets["p180"].index
     pd.DataFrame(embedding).to_csv("Spectral.csv")

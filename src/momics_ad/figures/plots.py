@@ -1,9 +1,11 @@
 import math
 import os
 
+import matplotlib.axes as axs
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.backends.backend_pdf import PdfPages
 
 from momics_ad.io import subset
 from momics_ad.stats import sd
@@ -106,7 +108,7 @@ def scatter_plot(scores: pd.DataFrame):
     fig.savefig("plots/ScatterPlot.pdf", dpi=600)
 
 
-def diagnostic_plots(dat: pd.DataFrame):
+def diagnostic_plots(dat: pd.DataFrame, name: str):
     """
     Diagnostic plots of continuous distributions.
     Originally thought to plot the metabolites values of the p180
@@ -117,27 +119,44 @@ def diagnostic_plots(dat: pd.DataFrame):
     dat: pd.DataFrame
         Data frame in which to plot all variables.
         Should have column names and variables are all continuous.
+    name: str
+        Name for the diagnostic plot file.
     """
     _check_dir()
-    for _, col in enumerate(dat):
-        hist_plot(dat.loc[:, col], "diagnostic_plots/" + col + ".png")
-        plt.close()
+    n_vars = dat.shape[1] + 1
+    n_cols, n_rows = _how_many_plots(n_vars, False)
+    fig = plt.figure()
+    spec = fig.add_gridspec(ncols=n_cols, nrows=n_rows)
+    plot_number = 1
+    ax_col = 0
+    ax_row = 0
+    looping = True
+    # if n_vars > 8:  # Use multi pdf
+    #    with PdfPages("diagnostic_plots/" + name + ".pdf") as pdf:
+    while looping:
+        for _, col in enumerate(dat):
+            ax = fig.add_subplot(spec[ax_row, ax_col])
+            hist_plot(dat.loc[:, col], ax)
+        if plot_number > n_vars:
+            looping = False
+    fig.tight_layout()
+    fig.savefig("diagnostic_plots/" + name + ".pdf", dpi=300)
 
 
-def hist_plot(dat: pd.DataFrame | pd.Series, name: str):
+def hist_plot(
+    dat: pd.DataFrame | pd.Series,
+    ax: axs.Axes,
+):
     """Plot a histogram
 
     Parameters
     ----------
     dat: pd.DataFrame, pd.Series
         Data set or series to plot.
-    name: str
-        Name of the plot, can be a path.
+    ax: axs.Axes
+        Axes object.
     """
-    fig, ax = plt.subplots()
     ax.hist(dat)
-    fig.tight_layout()
-    fig.savefig(name, dpi=300)
 
 
 def orientation_plot(scores: pd.DataFrame):
@@ -248,9 +267,65 @@ def vip_plot(dat: pd.DataFrame, fnames: list[str]):
     fig.savefig("plots/VIPPlot.pdf", dpi=300)
 
 
+def plot_embedding(embedding: np.ndarray, qt: pd.DataFrame):
+    """
+    Plot spectral clustering embedding.
+
+    Parameters
+    ----------
+    embedding: np.ndarray
+        Embedding matrix.
+    qt: pd.DataFrame
+        Dataframe with Sex and diagnosis data.
+    """
+    _check_dir()
+    for col in qt:
+        fig, ax = plt.subplots()
+        color = list(qt[col])
+        for c in set(color):
+            keep = qt[col] == c
+            ax.scatter(embedding[keep, 0], embedding[keep, 1])
+        fig.tight_layout()
+        fig.savefig("plots/Spectral" + col + ".pdf", dpi=300)
+        plt.close()
+
+
 def _check_dir():
     """
     Check and create directory for plots if not exists.
     """
     for folder in ["plots", "diagnostic_plots"]:
         os.makedirs(folder, exist_ok=True)
+
+
+def _how_many_plots(n_vars: int, pairwise: bool) -> tuple[int, int]:
+    """
+    Obtain the number of rows and columns to use to plot
+    a given the number of axes. If n_vars is odd and pairwise
+    true, the number of axes does not count the last variable.
+
+    Parameters
+    ----------
+    n_vars: int
+        Number of variables to plot.
+    pairwise: bool
+        Whether the plots are intended for paiwise data.
+
+    Returns
+    -------
+    n_cols, n_rows: tuple[int, int]
+        Number of columns and rows to use.
+    """
+    # Getting number of axes
+    if pairwise:
+        n_axes = int(n_vars / 2)
+    else:
+        n_axes = n_vars
+    # Getting number of cols
+    if n_axes == 1:
+        n_cols = 1
+    else:
+        n_cols = 2
+    # Get number of rows
+    n_rows = math.ceil(n_axes / 2)
+    return n_cols, n_rows
