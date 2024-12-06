@@ -5,7 +5,6 @@ import matplotlib.axes as axs
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.backends.backend_pdf import PdfPages
 
 from momics_ad.io import subset
 from momics_ad.stats import sd
