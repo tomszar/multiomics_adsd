@@ -98,7 +98,7 @@ def get_spectral(aff: np.ndarray) -> np.ndarray:
     embedding: np.ndarray
         Spectral embedding.
     """
-    embedding = spectral_embedding(aff, n_components=2, random_state=1548)
+    embedding = spectral_embedding(aff, n_components=10, random_state=1548)
     return embedding
 
 
