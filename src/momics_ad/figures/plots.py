@@ -10,7 +10,11 @@ from momics_ad.io import subset
 from momics_ad.stats import sd
 
 
-def scatter_plot(scores: pd.DataFrame):
+def scatter_plot(
+    scores: pd.DataFrame,
+    xlim: tuple[float, float] | None = None,
+    ylim: tuple[float, float] | None = None,
+):
     """
     Scatter plot from all dimensions, divided by sex,
     and diagnosis highlighted.
@@ -20,6 +24,10 @@ def scatter_plot(scores: pd.DataFrame):
     scores: pd.DataFrame
         Dataframe with scores, sex, and diagnosis columns,
         as obtained from the pls_da command.
+    xlim: tuple[int, int] | None
+        Lower and upper limits on the x axis.
+    ylim: tuple[int, int] | None
+        Lower and upper limits on the y axis.
     """
     _check_dir()
     # Get mean coordinates
@@ -67,8 +75,10 @@ def scatter_plot(scores: pd.DataFrame):
         for idx1 in range(0, last_col + 1, 2):
             ax = fig.add_subplot(spec[ax_row, ax_col])
             # Set manual limits
-            ax.set_xlim(-4, 4)
-            ax.set_ylim(-4, 4)
+            if xlim is not None:
+                ax.set_xlim(xlim[0], xlim[1])
+            if ylim is not None:
+                ax.set_ylim(ylim[0], ylim[1])
             for main_key, main_value in label_main_colors.items():
                 ax.scatter(
                     scores.loc[scores["PTGENDER"] == main_key, str(idx1)],
