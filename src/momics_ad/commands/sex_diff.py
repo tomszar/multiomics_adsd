@@ -1,6 +1,5 @@
 import argparse
 
-import numpy as np
 import pandas as pd
 
 from momics_ad.io import read, subset
@@ -20,8 +19,24 @@ def main():
         help="Number of iterations to run the randomization.\
                         Default 999.",
     )
+    parser.add_argument(
+        "-F",
+        type=str,
+        default="pls",
+        metavar="FILE",
+        help="Type of file to use to generate the sex difference analysis.",
+    )
     args = parser.parse_args()
-    x_scores = read.read_xscores()
+    result_file_name = "ResultTable.csv"
+    x_scores = []
+    if args.F == "pls":
+        x_scores = read.read_xscores()
+        result_file_name = "ResultTable_PLS.csv"
+    elif args.F == "snf":
+        x_scores = read.read_spectral()
+        result_file_name = "ResultTable_SNF.csv"
+    else:
+        Warning("No proper file name to read")
     x_center = sd.center_matrix(x_scores)
     X, Y = subset.get_XY(x_center)
     model_full = sd.get_model_matrix(X)
@@ -29,7 +44,12 @@ def main():
     contrast = [[0, 1, 2], [3, 4, 5]]
     # Estimate LS vectors
     x_ls_full = sd._get_ls_vectors()
-    delta, angle, shape = sd.estimate_difference(Y, model_full, x_ls_full, contrast)
+    delta, angle, shape = sd.estimate_difference(
+        Y,
+        model_full,
+        x_ls_full,
+        contrast,
+    )
     deltas, angles, shapes = sd.RRPP(
         Y, model_full, model_red, x_ls_full, contrast, args.I
     )
@@ -45,4 +65,4 @@ def main():
         "Pvalues": pvals,
     }
     result_table = pd.DataFrame(vals).set_index("Index")
-    result_table.to_csv("ResultTable.csv")
+    result_table.to_csv(result_file_name)

@@ -29,12 +29,7 @@ def read_metabolomics(
         ]
     for i, file in enumerate(file_names):
         if "QT" in file:
-            dat = pd.read_csv(
-                file,
-                usecols=["RID", "DX", "VISCODE", "PTGENDER"],
-            ).set_index("RID")
-            dat = dat.loc[dat.loc[:, "VISCODE"] == "bl", ["DX", "PTGENDER"]]
-            dat = dat.loc[dat["DX"].isin(["NL", "MCI", "Dementia"]), :]
+            dat = _read_qt(file)
         else:
             dat = pd.read_csv(file).set_index("RID")
         dats[keys[i]] = dat
@@ -53,7 +48,7 @@ def read_xscores(file_names: None | list[str] = None) -> pd.DataFrame:
 
     Parameters
     ----------
-    file_name: Union[None, list[str]]
+    file_names: Union[None, list[str]]
         Name of files. If None, use default file names.
 
     Returns
@@ -64,14 +59,61 @@ def read_xscores(file_names: None | list[str] = None) -> pd.DataFrame:
     dats = []
     if file_names is None:
         file_names = ["Xscores.csv", "ADNI_adnimerge_20170629_QT-freeze.csv"]
-    for i, file in enumerate(file_names):
+    for file in file_names:
         if "QT" in file:
-            dat = pd.read_csv(
-                file, usecols=["RID", "DX", "VISCODE", "PTGENDER"]
-            ).set_index("RID")
-            dat = dat.loc[dat.loc[:, "VISCODE"] == "bl", ["DX", "PTGENDER"]]
+            dat = _read_qt(file)
         else:
             dat = pd.read_csv(file).set_index("RID")
         dats.append(dat)
     x_scores = dats[0].merge(dats[1], how="inner", on="RID")
     return x_scores
+
+
+def read_spectral(file_names: None | list[str] = None) -> pd.DataFrame:
+    """
+    Read spectral data, generated from the snf command.
+
+    Parameters
+    ----------
+    file_names: Union[None, list[str]]
+        Name of files. If None, use default file names.
+
+    Returns
+    -------
+    spectral: pd.DataFrame
+        Data frame with the spectral embedding scores, diagnosis, and sex.
+    """
+    dats = []
+    if file_names is None:
+        file_names = ["Spectral.csv", "ADNI_adnimerge_20170629_QT-freeze.csv"]
+    for file in file_names:
+        if "QT" in file:
+            dat = _read_qt(file)
+        else:
+            dat = pd.read_csv(file).set_index("RID")
+        dats.append(dat)
+    spectral = dats[0].merge(dats[1], how="inner", on="RID")
+    return spectral
+
+
+def _read_qt(file: str) -> pd.DataFrame:
+    """
+    Read QT file data and return baseline data on diagnosis and sex.
+
+    Parameters
+    ----------
+    file: str
+        Name of the QT file.
+
+    Returns
+    -------
+    qt: pd.DataFrame
+        Data frame from QT file with RID, diagnosis, sex, baseline.
+    """
+    qt = pd.read_csv(
+        file,
+        usecols=["RID", "DX", "VISCODE", "PTGENDER"],
+    ).set_index("RID")
+    qt = qt.loc[qt.loc[:, "VISCODE"] == "bl", ["DX", "PTGENDER"]]
+    qt = qt.loc[qt["DX"].isin(["NL", "MCI", "Dementia"]), :]
+    return qt
