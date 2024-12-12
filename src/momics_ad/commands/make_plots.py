@@ -46,10 +46,10 @@ def main():
 
     if args.F == "pls":
         plots.vip_plot(vips, met_names)
-        plots.scatter_plot(x_scores, xlim=(-4, 4), ylim=(-4, 4))
+        plots.scatter_plot(x_center, xlim=(-4, 4), ylim=(-4, 4))
     elif args.F == "snf":
         plots.scatter_plot(
-            x_scores,
+            x_center,
             xlim=(-0.05, 0.05),
             ylim=(-0.05, 0.05),
         )
