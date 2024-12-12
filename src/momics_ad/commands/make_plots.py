@@ -37,7 +37,8 @@ def main():
     for key in metabolomics:
         if key != "qt":
             col_names = list(metabolomics[key].columns)
-            met_names.append(col_names)
+            for col in col_names:
+                met_names.append(col)
 
     # Line plots
     plots.orientation_plot(x_center)
@@ -46,10 +47,16 @@ def main():
 
     if args.F == "pls":
         plots.vip_plot(vips, met_names)
-        plots.scatter_plot(x_center, xlim=(-4, 4), ylim=(-4, 4))
+        plots.scatter_plot(
+            x_center,
+            xlim=(-4, 4),
+            ylim=(-4, 4),
+            filename="ScatterPlot_PLS.pdf",
+        )
     elif args.F == "snf":
         plots.scatter_plot(
             x_center,
-            xlim=(-0.05, 0.05),
-            ylim=(-0.05, 0.05),
+            xlim=(-0.02, 0.02),
+            ylim=(-0.02, 0.02),
+            filename="ScatterPlot_SNF.pdf",
         )
