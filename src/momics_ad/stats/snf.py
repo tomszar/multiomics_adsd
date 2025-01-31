@@ -55,7 +55,7 @@ def SNF(Ws: list[np.ndarray], k: int = 20, t: int = 20) -> np.ndarray:
 
 
 def get_affinity_matrix(
-    dats: list[np.ndarray], K: int = 20, eps: float = 0.5
+        dats: list[np.ndarray], K: int = 20, eps: float = 0.5
 ) -> list[np.ndarray]:
     """
     Estimate the affinity matrix for all datasets in dats from the squared Euclidean
@@ -174,7 +174,7 @@ def _affinity_matrix(mat, K, eps):
     Diff_mat_sort = Diff_mat - np.diag(np.diag(Diff_mat))
     Diff_mat_sort = np.sort(Diff_mat_sort, axis=1)
     # Average distance with K nearest neighbors
-    K_dist = np.mean(Diff_mat_sort[:, 1 : (K + 1)], axis=1) + Machine_Epsilon
+    K_dist = np.mean(Diff_mat_sort[:, 1: (K + 1)], axis=1) + Machine_Epsilon
     sigma = ((np.add.outer(K_dist, K_dist) + Diff_mat) / 3) + Machine_Epsilon
     sigma[sigma < Machine_Epsilon] = Machine_Epsilon
 

@@ -11,13 +11,13 @@ from sklearn.preprocessing import OneHotEncoder
 
 
 def plsda_doubleCV(
-    X: pd.DataFrame,
-    y: Union[pd.DataFrame, pd.Series],
-    cv1_splits: int = 7,
-    cv2_splits: int = 8,
-    n_repeats: int = 30,
-    max_components: int = 50,
-    random_state: int = 1203,
+        X: pd.DataFrame,
+        y: Union[pd.DataFrame, pd.Series],
+        cv1_splits: int = 7,
+        cv2_splits: int = 8,
+        n_repeats: int = 30,
+        max_components: int = 50,
+        random_state: int = 1203,
 ) -> dict[str, Union[PLSRegression, pd.DataFrame]]:
     """
     Estimate a double cross validation on a partial least squares
@@ -121,12 +121,12 @@ def plsda_doubleCV(
 
 
 def _plsda_auroc(
-    n_components: int,
-    X_train: pd.DataFrame,
-    Y_train: Union[pd.Series, pd.DataFrame],
-    X_test: pd.DataFrame,
-    Y_test: Union[pd.Series, pd.DataFrame],
-    return_full: bool = False,
+        n_components: int,
+        X_train: pd.DataFrame,
+        Y_train: Union[pd.Series, pd.DataFrame],
+        X_test: pd.DataFrame,
+        Y_test: Union[pd.Series, pd.DataFrame],
+        return_full: bool = False,
 ) -> Union[float, dict[str, Union[PLSRegression, float]]]:
     """
     Estimate a partial least squares regression and return the AUROC value
@@ -169,8 +169,8 @@ def _plsda_auroc(
 
 
 def _calculate_vips(
-    model,
-    components: Union[None, list[int]] = None,
+        model,
+        components: Union[None, list[int]] = None,
 ) -> np.ndarray:
     """
     Estimates Variable Importance in Projection (VIP)

@@ -2,13 +2,13 @@
 name = "momics_ad"
 version = "0.1.0"
 description = "Multiomics sex difference analysis"
-license = "GNU General Public License v3.0"
+license = "GPL-3.0-or-later"
 authors = ["Tomas Gonzalez Zarzar <tomasgzarzar@gmail.com>"]
 readme = "README.md"
 repository = "https://github.com/tomszar/multiomics_adsd"
 keywords = ["multi-omics", "sex differences"]
 classifiers = [
-  "Pogramming Language :: Python :: 3",
+  "Programming Language :: Python :: 3",
   "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
   "Operating System :: OS Independent",
 ]

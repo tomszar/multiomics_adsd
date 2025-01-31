@@ -26,10 +26,10 @@ def center_matrix(dat: pd.DataFrame) -> pd.DataFrame:
     means = dat_num.groupby("PTGENDER").mean()
     last_col = str(dat.columns.get_loc("DX") - 1)
     datc.loc[dat["PTGENDER"] == "Female", "0":last_col] = (
-        datc.loc[dat["PTGENDER"] == "Female", "0":last_col] - means.iloc[0, :]
+            datc.loc[dat["PTGENDER"] == "Female", "0":last_col] - means.iloc[0, :]
     )
     datc.loc[dat["PTGENDER"] == "Male", "0":last_col] = (
-        datc.loc[dat["PTGENDER"] == "Male", "0":last_col] - means.iloc[1, :]
+            datc.loc[dat["PTGENDER"] == "Male", "0":last_col] - means.iloc[1, :]
     )
     return datc
 
@@ -113,10 +113,10 @@ def pair_difference(dat: pd.DataFrame) -> tuple:
 
 
 def estimate_difference(
-    Y: Union[pd.DataFrame, np.ndarray],
-    model_matrix: Union[pd.DataFrame, np.ndarray],
-    LS_means: Union[pd.DataFrame, np.ndarray],
-    contrast: list[list[int]],
+        Y: Union[pd.DataFrame, np.ndarray],
+        model_matrix: Union[pd.DataFrame, np.ndarray],
+        LS_means: Union[pd.DataFrame, np.ndarray],
+        contrast: list[list[int]],
 ) -> tuple:
     """
     Estimate parameters angle, delta, and shape given an outcome
@@ -183,12 +183,12 @@ def estimate_difference(
 
 
 def RRPP(
-    Y: Union[pd.DataFrame, np.ndarray],
-    model_full: Union[pd.DataFrame, np.ndarray],
-    model_reduced: Union[pd.DataFrame, np.ndarray],
-    LS_means: Union[pd.DataFrame, np.ndarray],
-    contrast: list[list[int]],
-    permutations: int = 999,
+        Y: Union[pd.DataFrame, np.ndarray],
+        model_full: Union[pd.DataFrame, np.ndarray],
+        model_reduced: Union[pd.DataFrame, np.ndarray],
+        LS_means: Union[pd.DataFrame, np.ndarray],
+        contrast: list[list[int]],
+        permutations: int = 999,
 ) -> tuple:
     """
     Residual Randomization in a Permutation Procedure to evaluate
@@ -245,7 +245,7 @@ def RRPP(
 
 
 def estimate_betas(
-    X: Union[pd.DataFrame, np.ndarray], Y: Union[pd.DataFrame, np.ndarray]
+        X: Union[pd.DataFrame, np.ndarray], Y: Union[pd.DataFrame, np.ndarray]
 ) -> Union[pd.DataFrame, np.ndarray]:
     """
     Estimate the beta coefficients between an outcome matrix
@@ -322,8 +322,8 @@ def _estimate_size(obs_vect: pd.DataFrame, levels: list[int]) -> int:
 
 
 def _estimate_orientation(
-    obs_vect: pd.DataFrame,
-    levels: list[int],
+        obs_vect: pd.DataFrame,
+        levels: list[int],
 ) -> np.ndarray:
     """
     Estimate the orientation of a trajectory of two or more levels.
@@ -359,7 +359,7 @@ def _estimate_orientation(
 
 
 def _estimate_shape(
-    vectors: Union[pd.DataFrame, np.ndarray], contrast: list[list[int]]
+        vectors: Union[pd.DataFrame, np.ndarray], contrast: list[list[int]]
 ) -> np.ndarray:
     """
     Align shapes using procrustes superimpostion and estimate shape

@@ -11,10 +11,10 @@ from momics_ad.stats import sd
 
 
 def scatter_plot(
-    scores: pd.DataFrame,
-    xlim: tuple[float, float] | None = None,
-    ylim: tuple[float, float] | None = None,
-    filename: str = "ScatterPlot.pdf",
+        scores: pd.DataFrame,
+        xlim: tuple[float, float] | None = None,
+        ylim: tuple[float, float] | None = None,
+        filename: str = "ScatterPlot.pdf",
 ):
     """
     Scatter plot from all dimensions, divided by sex,
@@ -156,8 +156,8 @@ def diagnostic_plots(dat: pd.DataFrame, name: str):
 
 
 def hist_plot(
-    dat: pd.DataFrame | pd.Series,
-    ax: axs.Axes,
+        dat: pd.DataFrame | pd.Series,
+        ax: axs.Axes,
 ):
     """Plot a histogram
 
@@ -206,10 +206,10 @@ def orientation_plot(scores: pd.DataFrame):
 
 
 def cor_plot(
-    dat: pd.DataFrame,
-    filename: str = "CorPlot",
-    estimate_cor: bool = True,
-    colormap: str = "coolwarm",
+        dat: pd.DataFrame,
+        filename: str = "CorPlot",
+        estimate_cor: bool = True,
+        colormap: str = "coolwarm",
 ):
     """
     Generate a correlation plot out of multiple variables.

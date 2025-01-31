@@ -1,110 +1,122 @@
 import pandas as pd
 
+# Constants for default filenames
+DEFAULT_METABOLOMICS_FILES = [
+    "P180.csv",
+    "NMR.csv",
+    "ADNI_adnimerge_20170629_QT-freeze.csv",
+]
+DEFAULT_XSCORES_FILES = [
+    "Xscores.csv",
+    "ADNI_adnimerge_20170629_QT-freeze.csv",
+]
+DEFAULT_SPECTRAL_FILES = [
+    "Spectral.csv",
+    "ADNI_adnimerge_20170629_QT-freeze.csv",
+]
 
-def read_metabolomics(
-    file_names: None | list[str] = None,
-) -> dict[str, pd.DataFrame]:
+
+def read_metabolomics(filenames: None | list[str] = None) -> dict[str, pd.DataFrame]:
     """
-    Read clean metabolomics files.
+    Read and clean metabolomics files and return a dictionary of dataframes.
 
     Parameters
     ----------
-    file_names: Union[None, list[str]]
-        Name of files. If None, use default file names from metabo_adni.
-        Default None.
+    filenames : Union[None, list[str]]
+        Names of files to read. If None, use default filenames.
 
     Returns
     -------
-    metabolites: dict[str, pd.DataFrame]
-        Dictionary of dataframe of metabolite concentration, diagnosis,
-        and sex. Dictionary keys are p180, nmr, and qt.
+    dict[str, pd.DataFrame]
+        Dictionary of metabolomics dataframes with keys 'p180', 'nmr', 'qt'.
     """
-    dats = {}
+    filenames = filenames or DEFAULT_METABOLOMICS_FILES
     keys = ["p180", "nmr", "qt"]
-    if file_names is None:
-        file_names = [
-            "P180.csv",
-            "NMR.csv",
-            "ADNI_adnimerge_20170629_QT-freeze.csv",
-        ]
-    for i, file in enumerate(file_names):
+    dats = _read_and_merge_files(filenames, keys)
+    return dats
+
+
+def read_xscores(filenames: None | list[str] = None) -> pd.DataFrame:
+    """
+    Read X scores from PLS-DA analysis.
+
+    Parameters
+    ----------
+    filenames : Union[None, list[str]]
+        Names of files to read. If None, use default filenames.
+
+    Returns
+    -------
+    pd.DataFrame
+        Merged dataframe with X scores.
+    """
+    filenames = filenames or DEFAULT_XSCORES_FILES
+    return _read_and_merge_files(filenames)
+
+
+def read_spectral(filenames: None | list[str] = None) -> pd.DataFrame:
+    """
+    Read spectral embedding data.
+
+    Parameters
+    ----------
+    filenames : Union[None, list[str]]
+        Names of files to read. If None, use default filenames.
+
+    Returns
+    -------
+    pd.DataFrame
+        Merged dataframe of spectral embedding scores.
+    """
+    filenames = filenames or DEFAULT_SPECTRAL_FILES
+    return _read_and_merge_files(filenames)
+
+
+def _read_and_merge_files(filenames: list[str], keys: None | list[str] = None) -> dict | list:
+    """
+    Read and merge data from specified files. Filters rows to retain shared indices.
+
+    Parameters
+    ----------
+    filenames : list[str]
+        List of file paths to read and process.
+    keys : Union[None, list[str]]
+        Optional keys for returned dictionary. If None, return a list of dataframes.
+
+    Returns
+    -------
+    Union[dict, list]
+        Dictionary or list of processed dataframes depending on 'keys'.
+    """
+    data_list = []
+    for file in filenames:
         if "QT" in file:
-            dat = _read_qt(file)
+            data = _read_qt(file)
         else:
-            dat = pd.read_csv(file).set_index("RID")
-        dats[keys[i]] = dat
-    merged = dats["p180"].merge(dats["nmr"], how="inner", on="RID")
-    merged = merged.merge(dats["qt"], how="inner", on="RID")
+            data = pd.read_csv(file).set_index("RID")
+        data_list.append(data)
+
+    merged = data_list[0]
+    for data in data_list[1:]:
+        merged = merged.merge(data, how="inner", on="RID")
+
     common_ids = merged.index
-    for key in dats:
-        dats[key] = dats[key].loc[common_ids, :]
-    metabolites = dats
-    return metabolites
+    for i, data in enumerate(data_list):
+        data_list[i] = data.loc[common_ids, :]
 
-
-def read_xscores(file_names: None | list[str] = None) -> pd.DataFrame:
-    """
-    Read X scores obtained from pls_da analysis.
-
-    Parameters
-    ----------
-    file_names: Union[None, list[str]]
-        Name of files. If None, use default file names.
-
-    Returns
-    -------
-    x_scores: pd.DataFrame
-        Data frame with the X scores, diagnosis, and sex.
-    """
-    dats = []
-    if file_names is None:
-        file_names = ["Xscores.csv", "ADNI_adnimerge_20170629_QT-freeze.csv"]
-    for file in file_names:
-        if "QT" in file:
-            dat = _read_qt(file)
-        else:
-            dat = pd.read_csv(file).set_index("RID")
-        dats.append(dat)
-    x_scores = dats[0].merge(dats[1], how="inner", on="RID")
-    return x_scores
-
-
-def read_spectral(file_names: None | list[str] = None) -> pd.DataFrame:
-    """
-    Read spectral data, generated from the snf command.
-
-    Parameters
-    ----------
-    file_names: Union[None, list[str]]
-        Name of files. If None, use default file names.
-
-    Returns
-    -------
-    spectral: pd.DataFrame
-        Data frame with the spectral embedding scores, diagnosis, and sex.
-    """
-    dats = []
-    if file_names is None:
-        file_names = ["Spectral.csv", "ADNI_adnimerge_20170629_QT-freeze.csv"]
-    for file in file_names:
-        if "QT" in file:
-            dat = _read_qt(file)
-        else:
-            dat = pd.read_csv(file).set_index("RID")
-        dats.append(dat)
-    spectral = dats[0].merge(dats[1], how="inner", on="RID")
-    return spectral
+    if keys:
+        return dict(zip(keys, data_list))
+    else:
+        return merged
 
 
 def _read_qt(file: str) -> pd.DataFrame:
     """
     Read QT file data and return baseline data on diagnosis and sex.
-
     Parameters
     ----------
     file: str
         Name of the QT file.
-
     Returns
     -------
     qt: pd.DataFrame
