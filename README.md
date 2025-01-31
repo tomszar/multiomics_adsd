@@ -2,6 +2,18 @@
 
 AD trajectory comparisons are done between sexes estimating differences in magnitude, orientation, and shape.
 
+## Development
+
+First, create a conda/mamba env, and activate the environment:
+```bash
+mamba create -n momics_ad_env poetry
+mamba activate momics_ad_env
+```
+Then, install with poetry
+```bash
+poetry install
+```
+
 Usage:
 - `pls_da`: Partial least squares regression of concatenated metabolomics with AD diagnosis as outcome. A double cross-validation is used to ensure proper estimation of the latent variables avoiding overfitting. It returns a `.csv` table with RID, and latent variable score. Options:
 	- `-R`: number of times the cross-validation loop should be repeated. Default 30.
